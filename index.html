@@ -5,80 +5,94 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CryoMaster Stock View</title>
     <style>
-        :root { --bg: #f5f7fa; --card: #ffffff; --primary: #1967D2; --text: #202124; --border: #dadce0; }
+        :root { --bg: #f2f4f8; --card: #ffffff; --primary: #1967D2; --text: #202124; --border: #dfe1e5; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 12px; }
-        .container { max-width: 600px; margin: 0 auto; }
+        .container { max-width: 800px; margin: 0 auto; }
         
-        /* 顶部盒子信息卡片 */
-        .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid var(--border); }
-        .header h1 { margin: 0; font-size: 1.25rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-        .header .meta { font-size: 0.85rem; color: #5f6368; margin-top: 4px; }
-        .stat-bar { height: 4px; background: #f1f3f4; border-radius: 2px; margin-top: 12px; overflow: hidden; }
+        /* 通用卡片 */
+        .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        
+        /* 顶部盒子信息 */
+        .header h1 { margin: 0; font-size: 1.3rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .header .meta { font-size: 0.85rem; color: #5f6368; margin-top: 6px; }
+        .stat-bar { height: 5px; background: #eee; border-radius: 3px; margin-top: 12px; overflow: hidden; }
         .stat-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.5s; }
 
-        /* === 1. 可视化网格图样式 === */
+        /* 标题栏 */
+        .section-title { font-size: 0.9rem; font-weight: 700; color: #5f6368; margin: 24px 0 10px 4px; text-transform: uppercase; letter-spacing: 0.5px; border-left: 4px solid var(--primary); padding-left: 8px; }
+
+        /* === 1. 顶部视觉网格 (Visual Map) === */
         .grid-wrap { overflow-x: auto; padding-bottom: 5px; }
-        .grid { display: grid; gap: 3px; margin: 0 auto; width: fit-content; }
+        .grid { display: grid; gap: 4px; margin: 0 auto; width: fit-content; }
         .cell { 
-            width: 32px; height: 32px; border-radius: 4px; border: 1px solid #eee; 
+            width: 30px; height: 30px; border-radius: 4px; border: 1px solid #e0e0e0; 
             display: flex; align-items: center; justify-content: center; 
             font-size: 10px; font-weight: bold; color: white; cursor: pointer;
+            transition: transform 0.1s;
         }
-        .cell.empty { background: #f9f9f9; border: 1px dashed #ccc; color: transparent; }
-        
-        .section-title { font-size: 0.9rem; font-weight: 700; color: #5f6368; margin: 20px 0 8px 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .cell:active { transform: scale(0.9); }
+        .cell.empty { background: #f8f9fa; border: 1px dashed #ccc; color: transparent; }
 
-        /* === 2. 详细列表卡片样式 === */
+        /* === 2. 详细列表：网格化布局 (Grid of Cards) === */
+        #list-container {
+            display: grid;
+            /* 核心：自动填充列，每列最小145px，在手机上通常显示2列 */
+            grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+            gap: 10px;
+        }
+
         .list-item { 
             background: var(--card);
-            border-radius: 8px;
-            padding: 14px;
-            margin-bottom: 10px;
+            border-radius: 10px;
+            padding: 12px;
             border: 1px solid var(--border);
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
             display: flex;
             flex-direction: column;
-            gap: 8px; /* 内部间距 */
+            gap: 8px;
+            height: 100%; /* 等高 */
+            box-sizing: border-box;
+            transition: border-color 0.2s;
         }
         
-        /* 卡片第一行：坐标 + 名称 */
-        .row-top { display: flex; align-items: center; gap: 8px; }
+        /* 选中高亮样式 */
+        .list-item.highlight { border: 2px solid var(--primary); background-color: #f0f7ff; }
+
+        /* 卡片内布局 */
+        .row-top { display: flex; justify-content: space-between; align-items: center; }
         .coord-badge { 
-            font-family: monospace; font-weight: 700; font-size: 1rem; 
+            font-family: monospace; font-weight: 700; font-size: 0.95rem; 
             color: var(--primary); background: #e8f0fe; 
-            padding: 2px 8px; border-radius: 4px; 
+            padding: 2px 6px; border-radius: 4px;
         }
-        .sample-name { font-weight: 700; font-size: 1.1rem; color: #202124; }
+        .sample-name { 
+            font-weight: 700; font-size: 1rem; color: #202124; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px;
+        }
         
-        /* 卡片第二行：胶囊标签 (类型、抗性) */
-        .row-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        /* 属性标签 */
+        .row-tags { display: flex; flex-wrap: wrap; gap: 4px; height: 22px; overflow: hidden; }
         .pill { 
-            display: flex; align-items: center; gap: 4px;
-            padding: 2px 10px; border-radius: 12px; 
-            font-size: 0.8rem; font-weight: 500; border: 1px solid transparent;
+            padding: 1px 6px; border-radius: 4px; font-size: 0.75rem; 
+            border: 1px solid transparent; white-space: nowrap;
         }
         .pill-type { background: #e3f2fd; color: #174ea6; border-color: #d2e3fc; }
         .pill-res { background: #fce8e6; color: #c5221f; border-color: #fad2cf; }
-        .icon-mini { width: 14px; height: 14px; fill: currentColor; }
 
-        /* 卡片第三行：描述文本 (特征、备注) */
-        .row-text { font-size: 0.85rem; color: #3c4043; display: flex; flex-direction: column; gap: 2px; }
-        .text-line { display: flex; align-items: flex-start; gap: 6px; }
-
-        /* 卡片底部：元数据 (日期、人员) */
+        /* 描述文字 */
+        .row-desc { font-size: 0.8rem; color: #5f6368; line-height: 1.3; flex-grow: 1; }
+        
+        /* 底部元数据 */
         .row-meta { 
-            font-size: 0.75rem; color: #70757a; 
-            margin-top: 4px; padding-top: 8px; 
-            border-top: 1px solid #f1f3f4;
-            display: flex; align-items: center; gap: 12px;
+            font-size: 0.7rem; color: #9aa0a6; margin-top: auto; padding-top: 6px;
+            border-top: 1px solid #f1f3f4; display: flex; justify-content: space-between;
         }
 
         /* 状态标记 */
-        .status-badge { margin-left: auto; font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+        .status-badge { font-size: 0.7rem; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
         .st-out { background: #fef7e0; color: #b06000; border: 1px solid #fce8b2; }
         .st-del { background: #f1f3f4; color: #5f6368; border: 1px solid #dadce0; }
 
-        /* 颜色定义 */
         .type-DNA { background-color: #1967D2; }
         .type-RNA { background-color: #A50E0E; }
         .type-Protein { background-color: #E37400; }
@@ -95,7 +109,7 @@
 <body>
 
 <div class="container">
-    <div id="loading">正在加载数据...</div>
+    <div id="loading">正在解码数据...</div>
     <div id="error-msg" class="error" style="display:none;"></div>
 
     <div id="app" style="display:none;">
@@ -107,17 +121,17 @@
             <div class="stat-bar"><div class="stat-fill" id="stat-fill"></div></div>
         </div>
 
-        <div class="section-title">Visual Map</div>
+        <div class="section-title">Overview</div>
         <div class="card grid-wrap">
             <div class="grid" id="grid-container"></div>
-            <div style="margin-top:10px; font-size:0.75rem; color:#666; display:flex; gap:10px;">
+            <div style="margin-top:10px; font-size:0.75rem; color:#666; display:flex; gap:12px; justify-content:center;">
                 <span style="display:flex;align-items:center"><span style="width:8px;height:8px;background:#1967D2;border-radius:50%;margin-right:4px;"></span>DNA</span>
                 <span style="display:flex;align-items:center"><span style="width:8px;height:8px;background:#F29900;border-radius:50%;margin-right:4px;"></span>Bact</span>
                 <span style="display:flex;align-items:center"><span style="width:8px;height:8px;background:#188038;border-radius:50%;margin-right:4px;"></span>Cell</span>
             </div>
         </div>
 
-        <div class="section-title">Detailed List</div>
+        <div class="section-title">Samples</div>
         <div id="list-container"></div>
     </div>
 </div>
@@ -147,17 +161,17 @@
         document.getElementById('loading').style.display = 'none';
         document.getElementById('app').style.display = 'block';
 
-        // === 基础信息 ===
+        // 基础信息
         document.getElementById('box-name').innerText = "📦 " + data.n;
         const [rows, cols] = data.s.split('x').map(Number);
         const used = data.d.length;
         const percent = Math.round((used / (rows*cols)) * 100);
 
-        document.getElementById('box-size').innerText = `ID: ${data.s}`; 
-        document.getElementById('box-usage').innerText = `已用: ${used}/${rows*cols} (${percent}%)`;
+        document.getElementById('box-size').innerText = `尺寸: ${data.s}`;
+        document.getElementById('box-usage').innerText = `占用: ${used}/${rows*cols} (${percent}%)`;
         document.getElementById('stat-fill').style.width = percent + "%";
 
-        // === 渲染网格图 ===
+        // 1. 渲染顶部视觉网格
         const wellMap = {};
         data.d.forEach(item => wellMap[`${item[0]},${item[1]}`] = item);
         const grid = document.getElementById('grid-container');
@@ -173,14 +187,20 @@
                     if (d[4] === 1) cell.classList.add('status-OUT');
                     if (d[4] === 2) cell.classList.add('status-DEL');
                     cell.style.backgroundColor = COLORS[d[3]] || COLORS['Other'];
-                    cell.innerText = d[2].substring(0, 2);
-                    // 点击网格跳转到下方列表
+                    cell.innerText = d[2].substring(0, 2); // 首字母
+                    
+                    // 点击定位到下方卡片
                     cell.onclick = () => {
                         const el = document.getElementById(`item-${key}`);
                         if(el) {
+                            // 滚动并高亮
                             el.scrollIntoView({behavior:"smooth", block:"center"});
-                            el.style.backgroundColor = "#fff8e1";
-                            setTimeout(() => el.style.backgroundColor = "white", 1500);
+                            // 移除旧的高亮
+                            document.querySelectorAll('.highlight').forEach(e => e.classList.remove('highlight'));
+                            // 添加新高亮
+                            el.classList.add('highlight');
+                            // 1.5秒后自动取消
+                            setTimeout(() => el.classList.remove('highlight'), 1500);
                         }
                     };
                 } else {
@@ -190,16 +210,14 @@
             }
         }
 
-        // === 渲染详细列表 (卡片式) ===
+        // 2. 渲染详细卡片列表 (网格排列)
         const list = document.getElementById('list-container');
-        
-        // 核心排序：按 A1, A2... B1... 顺序
-        data.d.sort((a,b) => (a[0] - b[0]) || (a[1] - b[1]));
+        data.d.sort((a,b) => (a[0] - b[0]) || (a[1] - b[1])); // 排序 A1, A2...
         
         data.d.forEach(item => {
-            // 0:r, 1:c, 2:name, 3:type, 4:status, 5:feat, 6:res, 7:op, 8:date, 9:desc
+            // 解构数据 (10项)
             const [r, c, name, type, status, feat, res, op, date, desc] = item;
-            const coord = String.fromCharCode(65+r) + (c+1); // A1, A2...
+            const coord = String.fromCharCode(65+r) + (c+1);
             
             const div = document.createElement('div');
             div.className = 'list-item';
@@ -210,10 +228,6 @@
             if (status === 1) statusBadge = `<span class="status-badge st-out">OUT</span>`;
             if (status === 2) statusBadge = `<span class="status-badge st-del">DEL</span>`;
 
-            // SVG 图标
-            const iconDna = `<svg class="icon-mini" viewBox="0 0 24 24"><path d="M4.5 9.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm15 0a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg>`;
-            const iconRes = `<svg class="icon-mini" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>`;
-
             div.innerHTML = `
                 <div class="row-top">
                     <span class="coord-badge">${coord}</span>
@@ -222,18 +236,17 @@
                 </div>
 
                 <div class="row-tags">
-                    <span class="pill pill-type">${iconDna} ${type}</span>
-                    ${res ? `<span class="pill pill-res">${iconRes} ${res}</span>` : ""}
+                    <span class="pill pill-type">${type}</span>
+                    ${res ? `<span class="pill pill-res">${res}</span>` : ""}
                 </div>
 
-                ${(feat || desc) ? `
-                <div class="row-text">
-                    ${feat ? `<div class="text-line"><span style="font-size:0.8rem">📝</span><span>${feat}</span></div>` : ""}
-                    ${desc ? `<div class="text-line"><span style="font-size:0.8rem">ℹ️</span><span style="font-style:italic;color:#666">${desc}</span></div>` : ""}
-                </div>` : ""}
+                <div class="row-desc">
+                    ${feat ? `<div>📝 ${feat}</div>` : ""}
+                    ${desc ? `<div>ℹ️ ${desc}</div>` : ""}
+                </div>
 
                 <div class="row-meta">
-                    ${op ? `<span>👤 ${op}</span>` : ""}
+                    ${op ? `<span>👤 ${op}</span>` : "<span></span>"}
                     ${date ? `<span>📅 ${date}</span>` : ""}
                 </div>
             `;
