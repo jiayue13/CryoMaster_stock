@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CryoMaster Stock View</title>
     <style>
-        :root { --bg: #f5f7fa; --card: #ffffff; --primary: #1967D2; --text: #202124; --border: #dadce0; }
+        :root { --bg: #f5f7fa; --card: #ffffff; --primary: #1967D2; --text: #202124; --border: #e0e0e0; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 12px; }
-        .container { max-width: 900px; margin: 0 auto; }
+        .container { max-width: 1000px; margin: 0 auto; } /* 稍微加宽容器 */
         
         /* 顶部卡片 */
         .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid var(--border); }
@@ -18,7 +18,7 @@
 
         .section-title { font-size: 0.9rem; font-weight: 700; color: #5f6368; margin: 24px 0 10px 4px; text-transform: uppercase; letter-spacing: 0.5px; border-left: 4px solid var(--primary); padding-left: 8px; }
 
-        /* === 1. 上方：迷你视觉网格 === */
+        /* === 1. 上方：迷你导航网格 === */
         .grid-wrap { overflow-x: auto; padding-bottom: 5px; }
         .mini-grid { display: grid; gap: 3px; margin: 0 auto; width: fit-content; }
         .mini-cell { 
@@ -28,17 +28,24 @@
         }
         .mini-cell.empty { background: #f8f9fa; border: 1px dashed #ccc; color: transparent; }
 
-        /* === 2. 下方：详细信息大网格 (Table Grid) === */
-        /* 允许横向滚动，防止手机上挤压 */
-        .detail-grid-container { overflow-x: auto; padding-bottom: 20px; }
+        /* === 2. 下方：详细信息大网格 (关键部分) === */
         
-        #list-container {
+        /* 滚动容器：允许左右滑动 */
+        .detail-scroll-container { 
+            overflow-x: auto; 
+            padding-bottom: 15px; 
+            -webkit-overflow-scrolling: touch; /* iOS顺滑滚动 */
+        }
+        
+        #list-grid {
             display: grid;
             gap: 8px;
-            min-width: 800px; /* 强制最小宽度，确保卡片不被压扁 */
+            /* 宽度由内容撑开，不设上限，确保列宽固定 */
+            width: max-content; 
+            margin: 0 auto;
         }
 
-        /* 详细卡片单元格 */
+        /* 单个详细卡片 */
         .grid-card {
             background: var(--card);
             border: 1px solid var(--border);
@@ -47,33 +54,43 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 90px; /* 固定最小高度，确保整齐 */
+            
+            /* [关键] 固定卡片尺寸，确保整齐划一 */
+            width: 160px;  
+            height: 110px; 
+            
             box-shadow: 0 1px 2px rgba(0,0,0,0.02);
             transition: all 0.2s;
+            box-sizing: border-box;
         }
         
-        /* 空位样式 */
+        /* 空位样式 (虚线框) */
         .grid-card.empty-slot {
-            background: #fdfdfd;
+            background: #fafafa;
             border: 1px dashed #e0e0e0;
-            justify-content: center;
-            align-items: center;
+            justify-content: flex-start;
             box-shadow: none;
+            opacity: 0.6;
         }
-        .empty-label { color: #e0e0e0; font-size: 1.2rem; font-weight: bold; }
 
-        /* 高亮样式 */
-        .grid-card.highlight { border: 2px solid var(--primary); background-color: #f0f7ff; transform: scale(1.02); z-index: 10; }
+        /* 高亮样式 (点击上方网格时触发) */
+        .grid-card.highlight { 
+            border: 2px solid var(--primary); 
+            background-color: #f0f7ff; 
+            transform: scale(1.05); 
+            z-index: 10; 
+            box-shadow: 0 4px 12px rgba(25, 103, 210, 0.2);
+        }
 
         /* 卡片内部元素 */
         .gc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .gc-coord { background: #e8f0fe; color: var(--primary); font-family: monospace; font-size: 0.85rem; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
-        .gc-name { font-weight: 700; font-size: 0.95rem; color: #202124; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px; }
+        .gc-coord { background: #e8f0fe; color: var(--primary); font-family: monospace; font-size: 0.8rem; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
+        .gc-name { font-weight: 700; font-size: 0.9rem; color: #202124; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
         
-        .gc-body { flex-grow: 1; display: flex; flex-direction: column; gap: 4px; font-size: 0.75rem; color: #5f6368; }
+        .gc-body { flex-grow: 1; display: flex; flex-direction: column; gap: 4px; font-size: 0.75rem; color: #5f6368; overflow: hidden; }
         
         .gc-tags { display: flex; flex-wrap: wrap; gap: 3px; }
-        .tag { padding: 1px 5px; border-radius: 4px; font-size: 0.7rem; }
+        .tag { padding: 1px 5px; border-radius: 4px; font-size: 0.7rem; white-space: nowrap; }
         .tag-type { background: #e3f2fd; color: #174ea6; }
         .tag-res { background: #fce8e6; color: #c5221f; }
 
@@ -92,7 +109,7 @@
 <body>
 
 <div class="container">
-    <div id="loading">正在解码数据...</div>
+    <div id="loading">正在加载数据...</div>
     <div id="error-msg" class="error" style="display:none;"></div>
 
     <div id="app" style="display:none;">
@@ -102,16 +119,18 @@
             <div class="stat-bar"><div class="stat-fill" id="stat-fill"></div></div>
         </div>
 
-        <div class="section-title">Visual Map</div>
+        <div class="section-title">Overview (点击跳转)</div>
         <div class="card grid-wrap">
             <div class="mini-grid" id="mini-grid"></div>
         </div>
 
-        <div class="section-title">Detailed Grid</div>
-        <div class="detail-grid-container">
-            <div id="list-container"></div>
+        <div class="section-title">Detailed Grid (左右滑动查看)</div>
+        
+        <div class="detail-scroll-container">
+            <div id="list-grid"></div>
         </div>
-        <div style="text-align:center; font-size:0.8rem; color:#999; margin-top:5px;">(← Scroll to view more →)</div>
+        
+        <div style="text-align:center; font-size:0.8rem; color:#999; margin-top:5px;">← Swipe to view full grid →</div>
     </div>
 </div>
 
@@ -149,7 +168,7 @@
         document.getElementById('box-usage').innerText = `Used: ${used}/${rows*cols} (${percent}%)`;
         document.getElementById('stat-fill').style.width = percent + "%";
 
-        // 将数据转为字典方便查找
+        // 数据字典
         const wellMap = {};
         data.d.forEach(item => wellMap[`${item[0]},${item[1]}`] = item);
 
@@ -158,25 +177,25 @@
         miniGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
 
         // === 2. 渲染下方详细网格 ===
-        const listGrid = document.getElementById('list-container');
-        listGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`; // 强制列数与盒子一致
+        const listGrid = document.getElementById('list-grid');
+        // [核心] 强制列数为盒子的列数 (例如9列)，每列固定宽度
+        listGrid.style.gridTemplateColumns = `repeat(${cols}, 160px)`; 
 
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
                 const key = `${r},${c}`;
                 const coord = String.fromCharCode(65+r) + (c+1);
                 
-                // --- 迷你格子 ---
+                // --- 创建迷你格子 ---
                 const mCell = document.createElement('div');
-                
-                // --- 详细卡片 ---
+                // --- 创建详细卡片 ---
                 const dCard = document.createElement('div');
                 dCard.id = `card-${key}`;
 
                 if (wellMap[key]) {
                     // 有数据
                     const d = wellMap[key];
-                    // 0:r, 1:c, 2:name, 3:type, 4:status, 5:feat, 6:res, 7:op, 8:date
+                    // 数据结构: 0:r, 1:c, 2:name, 3:type, 4:status, 5:feat, 6:res, 7:op, 8:date
                     
                     // 迷你样式
                     mCell.className = 'mini-cell';
@@ -184,27 +203,25 @@
                     mCell.innerText = d[2].substring(0, 1);
                     if(d[4] !== 0) mCell.style.opacity = "0.5";
 
-                    // 详细卡片样式
+                    // 详细卡片内容
                     dCard.className = 'grid-card';
-                    
-                    // 构建卡片内容
                     let statusMark = "";
-                    if(d[4]===1) statusMark = "<span style='color:#b06000'>OUT</span>";
-                    if(d[4]===2) statusMark = "<span style='color:#5f6368'>DEL</span>";
+                    if(d[4]===1) statusMark = "<span style='color:#b06000; font-weight:bold'>OUT</span>";
+                    if(d[4]===2) statusMark = "<span style='color:#5f6368; font-weight:bold'>DEL</span>";
 
                     dCard.innerHTML = `
                         <div class="gc-header">
                             <span class="gc-coord">${coord}</span>
                             ${statusMark}
                         </div>
-                        <div style="font-weight:bold; margin-bottom:4px; font-size:0.9rem;">${d[2]}</div>
+                        <div style="font-weight:bold; margin-bottom:4px; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${d[2]}">${d[2]}</div>
                         
                         <div class="gc-body">
                             <div class="gc-tags">
                                 <span class="tag tag-type">${d[3]}</span>
                                 ${d[6] ? `<span class="tag tag-res">${d[6]}</span>` : ''}
                             </div>
-                            ${d[5] ? `<div>📝 ${d[5]}</div>` : ''}
+                            ${d[5] ? `<div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${d[5]}">📝 ${d[5]}</div>` : ''}
                         </div>
                         
                         <div class="gc-footer">
@@ -213,23 +230,23 @@
                         </div>
                     `;
 
-                    // 交互联动
+                    // 交互：点击迷你格 -> 滚动到详细卡片
                     mCell.onclick = () => {
-                        dCard.scrollIntoView({behavior:"smooth", block:"center", inline:"center"});
+                        // 使用 scrollIntoView 时设置 inline: "center" 确保横向也能滚动到中间
+                        dCard.scrollIntoView({behavior:"smooth", block:"nearest", inline:"center"});
                         dCard.classList.add('highlight');
                         setTimeout(() => dCard.classList.remove('highlight'), 2000);
                     };
 
                 } else {
-                    // 空位
+                    // 空位 (Empty Slot)
                     mCell.className = 'mini-cell empty';
                     
                     dCard.className = 'grid-card empty-slot';
                     dCard.innerHTML = `
                         <div class="gc-header" style="width:100%">
-                            <span class="gc-coord" style="background:#f1f3f4; color:#999">${coord}</span>
+                            <span class="gc-coord" style="background:transparent; color:#ccc; border:1px solid #eee;">${coord}</span>
                         </div>
-                        <div class="empty-label">+</div>
                     `;
                 }
 
