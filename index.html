@@ -19,27 +19,39 @@
 
         .section-title { font-size: 0.95rem; font-weight: 800; color: #475569; margin: 24px 0 10px 4px; text-transform: uppercase; letter-spacing: 0.5px; border-left: 5px solid var(--primary); padding-left: 10px; }
 
-        /* === 1. 上方：迷你导航网格 (样式调整) === */
-        .grid-wrap { overflow-x: auto; padding-bottom: 5px; }
-        .mini-grid { display: grid; gap: 3px; margin: 0 auto; width: fit-content; }
+        /* === 1. 上方：迷你导航网格 (带坐标轴) === */
+        .grid-wrap { overflow-x: auto; padding-bottom: 10px; }
         
-        .mini-cell { 
-            width: 30px; height: 30px; /* 稍微加大一点以便显示坐标 */
-            border-radius: 4px; 
-            border: 1px solid #cbd5e1; 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 10px; /* 字体适中 */
-            font-weight: 700; 
-            color: white; 
-            cursor: pointer;
-            font-family: monospace; /* 等宽字体让坐标更整齐 */
+        .mini-grid { 
+            display: grid; 
+            gap: 2px; 
+            margin: 0 auto; 
+            width: fit-content; 
+            /* 居中显示 */
         }
         
-        /* 空位样式：显示灰色坐标 */
+        /* 坐标轴文字样式 */
+        .axis-cell {
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; color: #64748b; font-weight: bold; 
+            font-family: monospace;
+            width: 28px; height: 28px; /* 与格子等大 */
+        }
+
+        /* 实际数据格子 */
+        .mini-cell { 
+            width: 28px; height: 28px; 
+            border-radius: 3px; 
+            border: 1px solid #cbd5e1; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 10px; font-weight: bold; color: white; cursor: pointer;
+        }
+        
+        /* 空位样式：恢复为虚线框 */
         .mini-cell.empty { 
             background: #f8fafc; 
             border: 1px dashed #cbd5e1; 
-            color: #cbd5e1; /* 浅灰色文字 */
+            color: transparent; 
         }
 
         /* === 2. 下方：详细信息大网格 === */
@@ -137,7 +149,7 @@
             <div class="stat-bar"><div class="stat-fill" id="stat-fill"></div></div>
         </div>
 
-        <div class="section-title">Overview (点击跳转)</div>
+        <div class="section-title">Overview</div>
         <div class="card grid-wrap">
             <div class="mini-grid" id="mini-grid"></div>
         </div>
@@ -171,6 +183,14 @@
         }
     }
 
+    // 辅助函数：创建坐标轴单元格
+    function createAxisCell(text) {
+        const div = document.createElement('div');
+        div.className = 'axis-cell';
+        div.innerText = text;
+        return div;
+    }
+
     function renderApp(data) {
         document.getElementById('loading').style.display = 'none';
         document.getElementById('app').style.display = 'block';
@@ -186,13 +206,29 @@
         const wellMap = {};
         data.d.forEach(item => wellMap[`${item[0]},${item[1]}`] = item);
 
+        // === 1. 渲染上方迷你网格 (带坐标轴) ===
         const miniGrid = document.getElementById('mini-grid');
-        miniGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        
+        // [核心逻辑] Grid 列数 = 1(Row Label) + cols(Data)
+        // 第一列宽 25px，其余列宽 30px
+        miniGrid.style.gridTemplateColumns = `25px repeat(${cols}, 30px)`;
 
+        // --- 第一行：表头 (空 + 1, 2, 3...) ---
+        miniGrid.appendChild(createAxisCell("")); // 左上角空位
+        for (let c = 0; c < cols; c++) {
+            miniGrid.appendChild(createAxisCell(c + 1));
+        }
+
+        // === 2. 渲染下方详细网格容器 ===
         const listGrid = document.getElementById('list-grid');
         listGrid.style.gridTemplateColumns = `repeat(${cols}, 170px)`; 
 
+        // --- 循环每一行 ---
         for (let r = 0; r < rows; r++) {
+            // [A] 添加行坐标轴 (A, B, C...)
+            miniGrid.appendChild(createAxisCell(String.fromCharCode(65 + r)));
+
+            // [B] 循环该行的每一列
             for (let c = 0; c < cols; c++) {
                 const key = `${r},${c}`;
                 const coord = String.fromCharCode(65+r) + (c+1);
@@ -201,14 +237,14 @@
                 const dCard = document.createElement('div');
                 dCard.id = `card-${key}`;
 
-                // === [核心修改] 无论是否有数据，迷你格子都显示坐标 ===
                 if (wellMap[key]) {
                     const d = wellMap[key];
                     
                     // 迷你格子 (Filled)
                     mCell.className = 'mini-cell';
                     mCell.style.backgroundColor = COLORS[d[3]] || COLORS['Other'];
-                    mCell.innerText = coord; // [修改] 显示 A1, B2...
+                    // 恢复显示首字母 (如果不需要，把这行删掉即可)
+                    mCell.innerText = d[2].substring(0, 1).toUpperCase(); 
                     if(d[4] !== 0) mCell.style.opacity = "0.5";
 
                     // 详细卡片
@@ -246,10 +282,9 @@
                     };
 
                 } else {
-                    // 迷你格子 (Empty)
+                    // 迷你格子 (Empty) - 不显示文字，只留虚线
                     mCell.className = 'mini-cell empty';
-                    mCell.innerText = coord; // [修改] 空位也显示 A1, B2...
-
+                    
                     // 详细卡片 (Empty)
                     dCard.className = 'grid-card empty-slot';
                     dCard.innerHTML = `
