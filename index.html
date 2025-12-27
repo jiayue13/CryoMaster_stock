@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryoMaster Stock View</title>
+    <style>
+        :root { --bg: #f0f2f5; --card: #ffffff; --primary: #1967D2; --text: #333; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }
+        
+        .container { max-width: 600px; margin: 0 auto; }
+        
+        /* 卡片样式 */
+        .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        
+        /* 头部 */
+        .header h1 { margin: 0; font-size: 1.4rem; color: var(--primary); display: flex; align-items: center; }
+        .header .meta { font-size: 0.9rem; color: #666; margin-top: 8px; }
+        .stat-bar { height: 6px; background: #eee; border-radius: 3px; margin-top: 12px; overflow: hidden; }
+        .stat-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.5s; }
+
+        /* 网格 */
+        .grid-wrap { overflow-x: auto; padding-bottom: 10px; }
+        .grid { display: grid; gap: 4px; margin: 0 auto; width: fit-content; }
+        .cell { 
+            width: 34px; height: 34px; border-radius: 4px; border: 1px solid #eee; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 10px; font-weight: bold; color: white; cursor: pointer;
+        }
+        .cell.empty { background: #f9f9f9; border: 1px dashed #ccc; color: transparent; }
+        
+        /* 列表 */
+        .list-item { padding: 12px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        .item-main { font-weight: 600; }
+        .item-sub { font-size: 0.8rem; color: #888; margin-top: 2px; }
+        .tag { padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; background: #eee; color: #555; }
+        
+        /* 颜色定义 (与 Python 端保持一致) */
+        .type-DNA { background-color: #1967D2; }
+        .type-RNA { background-color: #A50E0E; }
+        .type-Protein { background-color: #E37400; }
+        .type-Bacteria { background-color: #F29900; }
+        .type-Cell { background-color: #188038; }
+        .type-Other { background-color: #5F6368; }
+        
+        .status-OUT { background-color: #E37400 !important; opacity: 0.6; }
+        .status-DEL { background-color: #5F6368 !important; opacity: 0.3; }
+
+        #loading { text-align: center; padding: 40px; color: #666; }
+        .error { color: #D93025; text-align: center; padding: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="loading">正在解码数据...<br>Decoding Data...</div>
+    <div id="error-msg" class="error" style="display:none;"></div>
+
+    <div id="app" style="display:none;">
+        <div class="card header">
+            <h1 id="box-name">📦 Unknown Box</h1>
+            <div class="meta">
+                <span id="box-size"></span> • <span id="box-usage"></span>
+            </div>
+            <div class="stat-bar"><div class="stat-fill" id="stat-fill"></div></div>
+        </div>
+
+        <div class="card grid-wrap">
+            <h3 style="margin:0 0 10px 0; font-size:1rem;">Visual Map</h3>
+            <div class="grid" id="grid-container"></div>
+            <div style="margin-top:10px; font-size:0.8rem; color:#666;">
+                <span style="color:#1967D2">■</span> DNA 
+                <span style="color:#F29900">■</span> Bact 
+                <span style="color:#188038">■</span> Cell
+                <span style="margin-left:10px; opacity:0.6;">🟧 Out</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin:0 0 10px 0; font-size:1rem;">Detailed List</h3>
+            <div id="list-container"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 颜色映射
+    const COLORS = {
+        "DNA": "#1967D2", "RNA": "#A50E0E", "Protein": "#E37400",
+        "Cell": "#188038", "Bacteria": "#F29900", "Other": "#5F6368"
+    };
+
+    function parseData() {
+        try {
+            // 1. 获取 URL 参数
+            const params = new URLSearchParams(window.location.search);
+            const rawData = params.get('data');
+            
+            if (!rawData) throw new Error("No data found in URL");
+
+            // 2. Base64 解码 (处理 UTF-8 字符)
+            // Python urlsafe_b64encode 替换了 +/ 为 -_，JS atob 需要换回来
+            let base64 = rawData.replace(/-/g, '+').replace(/_/g, '/');
+            // 补全 padding
+            while (base64.length % 4) base64 += '=';
+            
+            // 解码 UTF-8 字符串
+            const jsonStr = decodeURIComponent(Array.prototype.map.call(atob(base64), function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+
+            const data = JSON.parse(jsonStr);
+            renderApp(data);
+
+        } catch (e) {
+            document.getElementById('loading').style.display = 'none';
+            const errDiv = document.getElementById('error-msg');
+            errDiv.style.display = 'block';
+            errDiv.innerHTML = "❌ 数据解析失败 / Invalid Data Link<br><small>" + e.message + "</small>";
+        }
+    }
+
+    function renderApp(data) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+
+        // 1. 基础信息
+        document.getElementById('box-name').innerText = "📦 " + data.n;
+        const [rows, cols] = data.s.split('x').map(Number);
+        const total = rows * cols;
+        const used = data.d.length;
+        const percent = Math.round((used / total) * 100);
+
+        document.getElementById('box-size').innerText = `Size: ${data.s}`;
+        document.getElementById('box-usage').innerText = `Used: ${used}/${total} (${percent}%)`;
+        document.getElementById('stat-fill').style.width = percent + "%";
+
+        // 2. 准备网格数据字典
+        const wellMap = {};
+        data.d.forEach(item => {
+            // item结构: [row, col, name, type, status, feature]
+            wellMap[`${item[0]},${item[1]}`] = item;
+        });
+
+        // 3. 渲染网格
+        const grid = document.getElementById('grid-container');
+        grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const key = `${r},${c}`;
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                
+                if (wellMap[key]) {
+                    const d = wellMap[key];
+                    const type = d[3];
+                    const status = d[4]; // 0=OK, 1=Out, 2=Del
+                    
+                    // 设置背景色
+                    let bg = COLORS[type] || COLORS['Other'];
+                    cell.style.backgroundColor = bg;
+                    
+                    if (status === 1) cell.classList.add('status-OUT');
+                    if (status === 2) cell.classList.add('status-DEL');
+                    
+                    // 显示简写或首字母
+                    cell.innerText = d[2].substring(0, 2);
+                    cell.title = `${String.fromCharCode(65+r)}${c+1}: ${d[2]}`;
+                    
+                    // 点击跳转到列表
+                    cell.onclick = () => {
+                        document.getElementById(`item-${key}`).scrollIntoView({behavior: "smooth"});
+                        // 高亮一下列表项
+                        const li = document.getElementById(`item-${key}`);
+                        li.style.background = "#fff3cd";
+                        setTimeout(() => li.style.background = "transparent", 1000);
+                    };
+                } else {
+                    cell.className = 'cell empty';
+                }
+                grid.appendChild(cell);
+            }
+        }
+
+        // 4. 渲染列表
+        const list = document.getElementById('list-container');
+        // 按位置排序
+        data.d.sort((a,b) => (a[0] - b[0]) || (a[1] - b[1]));
+        
+        data.d.forEach(item => {
+            const [r, c, name, type, status, feat] = item;
+            const coord = `${String.fromCharCode(65+r)}${c+1}`;
+            
+            const div = document.createElement('div');
+            div.className = 'list-item';
+            div.id = `item-${r},${c}`;
+            
+            let statusBadge = "";
+            if (status === 1) statusBadge = `<span class="tag" style="background:#ffeeba; color:#856404">Out</span>`;
+            if (status === 2) statusBadge = `<span class="tag" style="background:#e2e3e5; color:#383d41">Del</span>`;
+            
+            let featHtml = feat ? `<br><small style="color:#1967D2">📝 ${feat}</small>` : "";
+
+            div.innerHTML = `
+                <div>
+                    <div class="item-main">
+                        <span style="font-family:monospace; color:#999; margin-right:5px;">[${coord}]</span>
+                        ${name}
+                    </div>
+                    <div class="item-sub">
+                        ${type} ${featHtml}
+                    </div>
+                </div>
+                <div style="text-align:right">
+                    ${statusBadge}
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    // 启动解析
+    parseData();
+</script>
+
+</body>
+</html>
