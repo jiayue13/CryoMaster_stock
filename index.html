@@ -3,398 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CryoMaster Stock</title>
+    <title>CryoBox Viewer</title>
     <style>
-        :root {
-            --primary: #007AFF;
-            --bg: #F2F2F7;
-            --card: #FFFFFF;
-            --text-main: #000000;
-            --text-sub: #8E8E93;
-            --separator: #C6C6C8;
-            --danger: #FF3B30;
-            --success: #34C759;
-            --warning: #FF9500;
-        }
-
+        :root { --primary: #007AFF; --bg: #F2F2F7; --card: #FFF; --text: #000; --sub: #8E8E93; }
+        body { margin: 0; padding: 20px 16px; font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            margin: 0;
-            padding: 20px 16px;
-            color: var(--text-main);
-            min-height: 100vh;
-        }
+        /* 顶部卡片 */
+        .header { background: var(--card); padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; }
+        h1 { margin: 0 0 5px 0; font-size: 22px; }
+        .meta { color: var(--sub); font-size: 13px; }
 
-        /* === 顶部卡片 === */
-        .header-card {
-            background: var(--card);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        h1 { margin: 0 0 8px 0; font-size: 22px; font-weight: 700; }
-        .meta { color: var(--text-sub); font-size: 13px; display: flex; justify-content: center; gap: 12px; }
-        
         /* 搜索框 */
-        .search-box {
-            margin-top: 16px;
-            position: relative;
-        }
-        .search-input {
-            width: 100%;
-            padding: 10px 12px 10px 36px;
-            border-radius: 10px;
-            border: none;
-            background: #E3E3E8;
-            font-size: 16px;
-            color: var(--text-main);
-            transition: all 0.3s;
-        }
-        .search-input:focus { background: #D1D1D6; outline: none; }
-        .search-icon {
-            position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
-            color: var(--text-sub); font-size: 14px;
-        }
+        .search-wrap { margin-top: 15px; position: relative; }
+        .search-inp { width: 100%; padding: 10px 10px 10px 36px; border: none; background: #E5E5EA; border-radius: 10px; font-size: 16px; }
+        .search-icon { position: absolute; left: 10px; top: 10px; color: var(--sub); }
 
-        /* === 网格容器 === */
-        .grid-container {
-            display: flex;
-            justify-content: center;
-            overflow-x: auto;
-            padding-bottom: 40px; /* 留出底部空间 */
-        }
-
-        .grid {
-            display: grid;
-            gap: 8px;
-            padding: 10px;
-        }
-
-        /* === 细胞格样式 === */
-        .cell {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px; /* 方圆形更现代 */
-            background-color: #E5E5EA;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: 700;
-            color: #fff;
-            position: relative;
-            cursor: pointer;
-            transition: transform 0.2s, opacity 0.3s, filter 0.3s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .cell:active { transform: scale(0.9); }
-        .cell.empty { background-color: #E5E5EA; box-shadow: none; border: 1px dashed #C7C7CC; }
-        .cell.dimmed { opacity: 0.1; filter: grayscale(100%); } /* 搜索未匹配状态 */
-
-        /* 状态标记 */
-        .status-dot {
-            position: absolute; top: -2px; right: -2px;
-            width: 8px; height: 8px; border-radius: 50%;
-            border: 2px solid var(--bg);
-        }
-        .s-removed { background: var(--warning); }
-        .s-discarded { background: var(--text-sub); }
-
-        /* === 弹窗 (Modal) === */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(5px);
-            z-index: 100;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.3s;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .modal-overlay.active { opacity: 1; pointer-events: auto; }
-
-        .modal-card {
-            background: var(--card);
-            width: 90%; max-width: 360px;
-            border-radius: 20px;
-            padding: 24px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            transform: scale(0.9);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            position: relative;
-        }
-        .modal-overlay.active .modal-card { transform: scale(1); }
-
-        .close-btn {
-            position: absolute; top: 16px; right: 16px;
-            background: #F2F2F7; border: none;
-            width: 30px; height: 30px; border-radius: 50%;
-            font-size: 18px; color: #8E8E93;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-        }
-
-        /* 弹窗内容 */
-        .m-coord {
-            display: inline-block;
-            background: var(--primary); color: white;
-            padding: 4px 10px; border-radius: 8px;
-            font-size: 12px; font-weight: bold; margin-bottom: 12px;
-        }
-        .m-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; line-height: 1.3; }
-        .m-type { font-size: 14px; color: var(--text-sub); font-weight: 600; margin-bottom: 16px; display: block; }
+        /* 网格 */
+        .grid-wrap { display: flex; justify-content: center; overflow-x: auto; padding-bottom: 40px; }
+        .grid { display: grid; gap: 6px; }
         
-        .info-row {
-            display: flex; justify-content: space-between;
-            padding: 8px 0; border-bottom: 1px solid #F2F2F7;
-            font-size: 14px;
+        .cell {
+            width: 40px; height: 40px; border-radius: 8px; background: #E5E5EA; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 10px; font-weight: bold; color: #fff; position: relative;
+            transition: 0.2s; cursor: pointer;
         }
-        .info-row:last-child { border-bottom: none; }
-        .label { color: var(--text-sub); }
-        .value { font-weight: 500; text-align: right; }
+        .cell:active { transform: scale(0.9); }
+        .cell.empty { background: transparent; border: 1px dashed #C7C7CC; color: transparent; pointer-events: none; }
+        .cell.dim { opacity: 0.1; filter: grayscale(100%); } /* 搜索变暗 */
+        
+        /* 状态点 */
+        .dot { position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; border: 2px solid var(--bg); }
+        .s-out { background: #FF9500; } /* 取出 */
+        .s-bad { background: #5F6368; } /* 报废 */
 
-        .tags-container { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
-        .tag {
-            background: #E5E5EA; color: var(--text-main);
-            padding: 4px 10px; border-radius: 6px;
-            font-size: 12px; font-weight: 500;
+        /* 弹窗详情 */
+        .modal { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.3); backdrop-filter: blur(5px); z-index: 99;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: 0.2s;
         }
+        .modal.show { opacity: 1; pointer-events: auto; }
+        .m-card { 
+            background: #fff; width: 85%; max-width: 320px; padding: 24px; 
+            border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); transform: scale(0.9); transition: 0.2s;
+        }
+        .modal.show .m-card { transform: scale(1); }
 
-        .desc-box {
-            margin-top: 16px; padding: 12px;
-            background: #F9F9F9; border-radius: 12px;
-            font-size: 13px; color: #666; line-height: 1.5;
-        }
-
-        /* 加载动画 */
-        .loading {
-            display: flex; justify-content: center; align-items: center; height: 80vh;
-            color: var(--text-sub); font-weight: 500;
-        }
+        .tag { display: inline-block; padding: 2px 8px; background: #F2F2F7; border-radius: 6px; font-size: 12px; margin: 2px; }
+        .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+        .lbl { color: var(--sub); }
+        
+        .loading { text-align: center; color: var(--sub); margin-top: 50px; }
     </style>
 </head>
 <body>
 
-<div id="loading" class="loading">正在解码数据...</div>
+<div id="loading" class="loading">正在解析数据...</div>
 
-<div id="app" style="display: none;">
-    <div class="header-card">
-        <h1 id="boxName">Box Name</h1>
-        <div class="meta">
-            <span id="boxSize">9x9</span>
-            <span>•</span>
-            <span id="boxCount">0 items</span>
-        </div>
-        <div class="search-box">
+<div id="app" style="display:none">
+    <div class="header">
+        <h1 id="bName">-</h1>
+        <div class="meta" id="bInfo">-</div>
+        <div class="search-wrap">
             <span class="search-icon">🔍</span>
-            <input type="text" id="searchInput" class="search-input" placeholder="搜索名称、备注、类型...">
+            <input type="text" id="search" class="search-inp" placeholder="搜索样本...">
         </div>
     </div>
-
-    <div class="grid-container">
+    
+    <div class="grid-wrap">
         <div id="grid" class="grid"></div>
     </div>
 </div>
 
-<div id="modalOverlay" class="modal-overlay" onclick="closeModal()">
-    <div class="modal-card" onclick="event.stopPropagation()">
-        <button class="close-btn" onclick="closeModal()">×</button>
-        
-        <div class="m-coord" id="mCoord">A1</div>
-        <div class="m-title" id="mName">Sample Name</div>
-        <span class="m-type" id="mType">Type</span>
-
-        <div class="info-row">
-            <span class="label">状态</span>
-            <span class="value" id="mStatus">In Stock</span>
+<div id="modal" class="modal" onclick="closeM()">
+    <div class="m-card" onclick="event.stopPropagation()">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <span id="mCoord" style="background:#007AFF; color:#fff; padding:2px 8px; border-radius:6px; font-size:12px; font-weight:bold;">-</span>
+            <span onclick="closeM()" style="font-size:24px; color:#999; cursor:pointer;">&times;</span>
         </div>
-        <div class="info-row">
-            <span class="label">操作人</span>
-            <span class="value" id="mOp">-</span>
-        </div>
-        <div class="info-row">
-            <span class="label">日期</span>
-            <span class="value" id="mDate">-</span>
-        </div>
+        <h2 id="mName" style="margin:0 0 5px 0; font-size:18px;">-</h2>
+        <div id="mType" style="color:#888; font-size:14px; margin-bottom:15px;">-</div>
         
-        <div class="tags-container" id="mTags"></div>
+        <div class="row"><span class="lbl">状态</span><span id="mStatus" style="font-weight:bold">-</span></div>
+        <div class="row"><span class="lbl">操作人</span><span id="mOp">-</span></div>
+        <div class="row"><span class="lbl">日期</span><span id="mDate">-</span></div>
         
-        <div class="desc-box" id="mDesc" style="display:none;"></div>
+        <div id="mTags" style="margin-top:12px;"></div>
+        <div id="mDesc" style="margin-top:12px; background:#F9F9F9; padding:10px; border-radius:8px; font-size:13px; color:#555; display:none;"></div>
     </div>
 </div>
 
 <script>
-    // 颜色配置 (与 Python config.py 保持一致)
-    const COLORS = {
-        "DNA": "#1967D2", "RNA": "#A50E0E", "Protein": "#E37400",
-        "Cell": "#188038", "Bacteria": "#F29900", "Other": "#5F6368",
-        "Default": "#8E8E93"
-    };
-
-    let allCellsData = []; // 存储所有格子数据用于搜索
+    const COLORS = { "DNA": "#1967D2", "RNA": "#A50E0E", "Protein": "#E37400", "Cell": "#188038", "Bacteria": "#F29900", "Other": "#5F6368" };
+    let cells = []; // 搜索缓存
 
     window.onload = function() {
         try {
             const hash = window.location.hash.substring(1);
-            if (!hash) throw new Error("No Data");
-            
-            // Base64 解码
-            const jsonStr = decodeURIComponent(escape(window.atob(hash)));
-            const data = JSON.parse(jsonStr);
-            
-            renderApp(data);
-        } catch (e) {
-            document.getElementById('loading').innerHTML = "无法加载数据<br><small>链接可能已损坏</small>";
+            if(!hash) throw "无数据";
+            const data = JSON.parse(decodeURIComponent(escape(window.atob(hash))));
+            render(data);
+        } catch(e) {
+            document.getElementById('loading').innerHTML = "链接无效或无数据";
         }
     };
 
-    function renderApp(payload) {
+    function render(d) { // d = {n:name, s:size, d:list}
         document.getElementById('loading').style.display = 'none';
         document.getElementById('app').style.display = 'block';
+        
+        document.getElementById('bName').textContent = d.n;
+        document.getElementById('bInfo').textContent = `${d.s} • ${d.d.length} 样本`;
 
-        // 1. 填充头部信息
-        document.getElementById('boxName').textContent = payload.n;
-        document.getElementById('boxSize').textContent = payload.s;
-        document.getElementById('boxCount').textContent = `${payload.d.length} 个样本`;
-
-        // 2. 准备网格
-        const [rows, cols] = payload.s.split('x').map(Number);
+        const [R, C] = d.s.split('x').map(Number);
         const grid = document.getElementById('grid');
-        grid.style.gridTemplateColumns = `repeat(${cols}, 40px)`; // 固定列宽
+        grid.style.gridTemplateColumns = `repeat(${C}, 40px)`;
 
-        // 3. 构建数据 Map
-        const dataMap = new Map();
-        payload.d.forEach(item => dataMap.set(`${item[0]},${item[1]}`, item));
+        const map = new Map();
+        d.d.forEach(i => map.set(`${i[0]},${i[1]}`, i));
 
-        // 4. 生成网格
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-                const cell = document.createElement('div');
-                const coordKey = `${r},${c}`;
-                const item = dataMap.get(coordKey);
+        for(let r=0; r<R; r++){
+            for(let c=0; c<C; c++){
+                const el = document.createElement('div');
+                const item = map.get(`${r},${c}`);
+                const coord = String.fromCharCode(65+r) + (c+1);
                 
-                // 坐标 (0,0 -> A1)
-                const coordLabel = String.fromCharCode(65 + r) + (c + 1);
-
-                if (item) {
-                    const [row, col, name, type, stCode, feature, res, op, date, desc] = item;
+                if(item) {
+                    // item: [r, c, name, type, st, feat, res, op, date, desc]
+                    el.className = 'cell';
+                    el.style.backgroundColor = COLORS[item[3]] || '#666';
+                    el.textContent = item[2].substring(0,3);
                     
-                    cell.className = 'cell filled';
-                    cell.style.backgroundColor = COLORS[type] || COLORS['Other'];
-                    cell.textContent = name.substring(0, 3); // 简写显示
+                    if(item[4] === 1) el.innerHTML += '<div class="dot s-out"></div>';
+                    if(item[4] === 2) el.innerHTML += '<div class="dot s-bad"></div>';
                     
-                    // 状态红点
-                    if (stCode === 1 || stCode === 2) {
-                        const dot = document.createElement('div');
-                        dot.className = `status-dot ${stCode === 1 ? 's-removed' : 's-discarded'}`;
-                        cell.appendChild(dot);
-                    }
-
-                    // 绑定点击事件
-                    cell.onclick = () => openModal(item, coordLabel);
+                    el.onclick = () => showM(item, coord);
                     
-                    // 存入搜索池
-                    allCellsData.push({
-                        element: cell,
-                        text: `${name} ${type} ${res} ${op} ${desc} ${coordLabel}`.toLowerCase()
-                    });
+                    // 搜索索引
+                    el.dataset.txt = (item.join(' ') + ' ' + coord).toLowerCase();
+                    cells.push(el);
                 } else {
-                    cell.className = 'cell empty';
-                    // 空格子也存入，但不可搜索到内容
-                    allCellsData.push({ element: cell, text: "___EMPTY___" });
+                    el.className = 'cell empty';
                 }
-
-                grid.appendChild(cell);
+                grid.appendChild(el);
             }
         }
-
-        // 5. 绑定搜索事件
-        const searchInput = document.getElementById('searchInput');
-        searchInput.addEventListener('input', (e) => handleSearch(e.target.value));
-    }
-
-    function handleSearch(query) {
-        const term = query.trim().toLowerCase();
         
-        allCellsData.forEach(item => {
-            if (!term) {
-                // 清空时恢复
-                item.element.classList.remove('dimmed');
-            } else {
-                // 匹配逻辑
-                if (item.text.includes(term)) {
-                    item.element.classList.remove('dimmed');
-                } else {
-                    item.element.classList.add('dimmed');
-                }
-            }
+        // 绑定搜索
+        document.getElementById('search').addEventListener('input', (e)=>{
+            const k = e.target.value.toLowerCase();
+            cells.forEach(el => {
+                if(!k || el.dataset.txt.includes(k)) el.classList.remove('dim');
+                else el.classList.add('dim');
+            });
         });
     }
 
-    function openModal(item, coord) {
-        const [row, col, name, type, stCode, feature, res, op, date, desc] = item;
-        
-        // 填充数据
+    function showM(i, coord) {
         document.getElementById('mCoord').textContent = coord;
-        document.getElementById('mCoord').style.backgroundColor = COLORS[type] || COLORS['Other'];
+        document.getElementById('mCoord').style.backgroundColor = COLORS[i[3]] || '#666';
+        document.getElementById('mName').textContent = i[2];
+        document.getElementById('mType').textContent = i[3];
         
-        document.getElementById('mName').textContent = name;
-        document.getElementById('mType').textContent = type;
-        
-        const statusMap = ["在库 (In Stock)", "已取出 (Removed)", "已报废 (Discarded)"];
+        const sts = ["在库", "取出", "报废"];
         const stEl = document.getElementById('mStatus');
-        stEl.textContent = statusMap[stCode] || "Unknown";
-        stEl.style.color = stCode === 0 ? '#34C759' : (stCode === 1 ? '#FF9500' : '#8E8E93');
-
-        document.getElementById('mOp').textContent = op || '-';
-        document.getElementById('mDate').textContent = date || '-';
-
-        // 抗性标签
-        const tagsContainer = document.getElementById('mTags');
-        tagsContainer.innerHTML = '';
-        if (res) {
-            res.split(',').forEach(tag => {
-                if (tag.trim()) {
-                    const span = document.createElement('span');
-                    span.className = 'tag';
-                    span.textContent = tag.trim();
-                    tagsContainer.appendChild(span);
-                }
-            });
-        }
+        stEl.textContent = sts[i[4]];
+        stEl.style.color = i[4]===0 ? '#34C759' : (i[4]===1 ? '#FF9500' : '#8E8E93');
         
-        // 特征
-        if (feature) {
-             const span = document.createElement('span');
-             span.className = 'tag';
-             span.style.background = '#E3F2FD';
-             span.style.color = '#1967D2';
-             span.textContent = "🧬 " + feature;
-             tagsContainer.appendChild(span);
-        }
+        document.getElementById('mOp').textContent = i[7] || '-';
+        document.getElementById('mDate').textContent = i[8] || '-';
+        
+        const tagBox = document.getElementById('mTags');
+        tagBox.innerHTML = '';
+        if(i[6]) i[6].split(',').forEach(t => { if(t) tagBox.innerHTML += `<span class="tag">💊 ${t}</span>`; });
+        if(i[5]) tagBox.innerHTML += `<span class="tag" style="background:#E3F2FD;color:#007AFF">🧬 ${i[5]}</span>`;
+        
+        const dBox = document.getElementById('mDesc');
+        if(i[9]) { dBox.style.display='block'; dBox.textContent = i[9]; } 
+        else dBox.style.display='none';
 
-        // 备注
-        const descBox = document.getElementById('mDesc');
-        if (desc) {
-            descBox.style.display = 'block';
-            descBox.textContent = desc;
-        } else {
-            descBox.style.display = 'none';
-        }
-
-        // 显示动画
-        document.getElementById('modalOverlay').classList.add('active');
+        document.getElementById('modal').classList.add('show');
     }
-
-    function closeModal() {
-        document.getElementById('modalOverlay').classList.remove('active');
-    }
+    
+    function closeM() { document.getElementById('modal').classList.remove('show'); }
 </script>
-
 </body>
 </html>
