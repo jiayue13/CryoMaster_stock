@@ -3,147 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="color-scheme" content="light dark"> 
-    <title>CryoMaster View</title>
+    <meta name="color-scheme" content="light dark">
+    <title>CryoMaster Tree View</title>
     <script src="https://unpkg.com/fflate@0.8.0"></script>
     <style>
-        /* === 变量定义 (默认浅色) === */
         :root {
-            --bg: #F5F7FA; 
-            --card: #FFF; 
-            --text: #333; 
-            --sub: #888;
-            --border: #E5E5EA;
-            --primary: #007AFF; 
-            --warn: #D93025;
-            
-            /* 格子相关 */
-            --cell-size: 80px; 
-            --gap: 10px;
-            --cell-bg: #FFF;
-            --cell-bd: #EAEAEA;
-            --ring-bg: rgba(0,0,0,0.08);
-            
-            /* 状态背景 (浅色模式下默认使用 JS 注入的颜色, 这里定义深色模式的备用) */
-            --st-0: #1b5e20;
-            --st-1: #e65100;
-            --st-2: #b71c1c;
+            --bg: #F5F7FA; --card: #FFF; --text: #333; --sub: #888;
+            --border: #E5E5EA; --primary: #007AFF; --warn: #D93025;
+            --cell-size: 72px; --gap: 8px;
+            --cell-bg: #FFF; --cell-bd: #EAEAEA; --ring-bg: rgba(0,0,0,0.08);
+            --st-0: #1b5e20; --st-1: #e65100; --st-2: #b71c1c;
+            --hover: #f2f2f7; --tree-line: #d1d1d6;
         }
-
-        /* === 深色模式适配 === */
         @media (prefers-color-scheme: dark) {
             :root {
-                --bg: #000000; 
-                --card: #1C1C1E; 
-                --text: #F0F0F0; 
-                --sub: #98989D;
-                --border: #38383A;
-                --primary: #0A84FF; /* 苹果风格深色蓝 */
-                --warn: #FF453A;
-                
-                --cell-bg: #2C2C2E;
-                --cell-bd: #3A3A3C;
-                --ring-bg: rgba(255,255,255,0.15); /* 浅色轨道 */
+                --bg: #000000; --card: #1C1C1E; --text: #F0F0F0; --sub: #98989D;
+                --border: #38383A; --primary: #0A84FF; --warn: #FF453A;
+                --cell-bg: #2C2C2E; --cell-bd: #3A3A3C; --ring-bg: rgba(255,255,255,0.15);
+                --hover: #2c2c2e; --tree-line: #48484a;
             }
-            /* 强制覆盖 JS 注入的浅色背景，使用深色半透明 */
-            .cell.s-0 { background-color: rgba(48, 209, 88, 0.15) !important; border-color: rgba(48, 209, 88, 0.3) !important; }
-            .cell.s-1 { background-color: rgba(255, 159, 10, 0.15) !important; border-color: rgba(255, 159, 10, 0.3) !important; }
-            .cell.s-2 { background-color: rgba(255, 69, 58, 0.15) !important; border-color: rgba(255, 69, 58, 0.3) !important; }
-            
-            /* 搜索框深色 */
+            .cell.s-0 { background-color: rgba(48, 209, 88, 0.15) !important; }
+            .cell.s-1 { background-color: rgba(255, 159, 10, 0.15) !important; }
+            .cell.s-2 { background-color: rgba(255, 69, 58, 0.15) !important; }
             .search-inp { background: #2C2C2E !important; color: #FFF !important; }
-            .box-row:hover { background: #2C2C2E !important; }
             .warn-box { background: rgba(255, 69, 58, 0.1) !important; border-color: rgba(255, 69, 58, 0.3) !important; color: #FF453A !important; }
-            
-            /* 警示标边框变深 */
-            .warn { border-color: #2C2C2E !important; }
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; display: flex; overflow: hidden; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; height: 100vh; display: flex; overflow: hidden; }
 
-        /* 左侧栏 */
+        /* Sidebar */
         .sidebar { width: 320px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 20; flex-shrink: 0; transition: transform 0.3s; }
-        .search-box { padding: 15px; border-bottom: 1px solid var(--border); }
-        .search-inp { width: 100%; padding: 10px 12px; border-radius: 8px; border: none; background: #F5F7FA; font-size: 14px; outline: none; transition: background 0.3s; }
-        
-        .list-wrap { flex: 1; overflow-y: auto; padding: 10px; }
-        .cat-head { font-size: 12px; font-weight: bold; color: var(--sub); margin: 15px 0 5px 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-        
-        .box-row { padding: 12px; margin-bottom: 4px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.1s; }
-        .box-row:hover { background: #F5F7FA; }
-        .box-row.active { background: var(--primary) !important; color: #FFF !important; }
-        .box-row.active .b-n, .box-row.active .b-p { color: #FFF !important; opacity: 1; }
-        
-        .b-n { font-size: 14px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 200px; color: var(--text); }
-        .b-p { font-size: 12px; opacity: 0.6; color: var(--text); }
+        .search-box { padding: 12px; border-bottom: 1px solid var(--border); }
+        .search-inp { width: 100%; padding: 8px 12px; border-radius: 8px; border: none; background: #F5F7FA; font-size: 14px; outline: none; }
+        .list-wrap { flex: 1; overflow-y: auto; padding: 10px 0; }
 
-        /* 图例 */
-        .legend { padding: 15px 20px; background: var(--card); border-top: 1px solid var(--border); min-height: 120px; max-height: 250px; overflow-y: auto; }
-        .leg-title { font-size: 12px; font-weight: bold; color: var(--sub); margin-bottom: 10px; }
-        .leg-grid { display: flex; flex-wrap: wrap; gap: 10px; }
-        .leg-item { display: flex; align-items: center; font-size: 12px; color: var(--sub); width: 45%; }
-        .dot, .dot-st { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
-
-        /* 主区域 */
-        .main { flex: 1; display: flex; flex-direction: column; position: relative; }
-        .header { padding: 15px 25px; background: var(--card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); z-index: 10; }
-        .h-tit { font-size: 20px; font-weight: 800; color: var(--text); }
-        .h-sub { font-size: 13px; color: var(--sub); margin-top: 4px; display: flex; align-items: center; flex-wrap: wrap; }
-        .menu-btn { display: none; font-size: 24px; margin-right: 15px; cursor: pointer; color: var(--text); }
-
-        /* 网格 */
-        .grid-vp { flex: 1; overflow: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; cursor: grab; background: var(--bg); }
-        .grid-vp.active { cursor: grabbing; }
-        .grid { display: grid; padding: 20px; background: var(--card); border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); margin-bottom: 80px; transition: background 0.3s; }
-        .axis { display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--sub); opacity: 0.5; }
-
-        /* 细胞样式 */
-        .cell { 
-            width: var(--cell-size); height: var(--cell-size); 
-            border-radius: 12px; 
-            background: var(--cell-bg); 
-            border: 1px solid var(--cell-bd); 
-            position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; 
+        /* === 树形结构核心 CSS === */
+        .tree-item { 
+            position: relative; 
+            padding: 8px 12px 8px 0; /* padding-left dynamic via inline style */
+            cursor: pointer; display: flex; align-items: center; 
+            font-size: 13px; color: var(--text); border-radius: 4px; margin: 1px 8px;
+            transition: background 0.1s;
         }
-        .cell:active { transform: scale(0.95); }
-        .cell.empty { border: 1px dashed var(--sub); opacity: 0.3; background: transparent; pointer-events: none; }
+        .tree-item:hover { background: var(--hover); }
         
+        /* 选中态 */
+        .tree-item.active { background: var(--primary) !important; color: #fff !important; font-weight: 600; }
+        .tree-item.active .meta { color: rgba(255,255,255,0.8); }
+        .tree-item.active .icon { color: #fff; }
+
+        /* 文件夹 */
+        .folder-cnt { display: none; } /* 默认折叠 */
+        .folder-cnt.open { display: block; }
+        
+        /* 图标 */
+        .arrow { font-size: 10px; color: var(--sub); margin-right: 6px; transition: transform 0.2s; display: inline-block; width: 12px; text-align: center; }
+        .icon { margin-right: 6px; font-size: 14px; }
+        .tree-item.expanded .arrow { transform: rotate(90deg); }
+        
+        /* 引导线 (Tree Guide Lines) */
+        .tree-node { border-left: 1px solid var(--tree-line); margin-left: 10px; } /* 每一层缩进都有线 */
+        .root-node { border-left: none; margin-left: 0; } /* 根节点无线 */
+
+        .meta { margin-left: auto; font-size: 11px; color: var(--sub); }
+
+        /* Legend */
+        .legend { padding: 15px; background: var(--card); border-top: 1px solid var(--border); min-height: 100px; max-height: 200px; overflow-y: auto; }
+        .leg-title { font-size: 12px; font-weight: bold; color: var(--sub); margin-bottom: 8px; }
+        .leg-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .leg-item { display: flex; align-items: center; font-size: 11px; color: var(--sub); width: 48%; }
+        .dot, .dot-st { width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+
+        /* Main */
+        .main { flex: 1; display: flex; flex-direction: column; position: relative; }
+        .header { padding: 12px 20px; background: var(--card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); z-index: 10; }
+        .h-tit { font-size: 18px; font-weight: 700; color: var(--text); }
+        .h-sub { font-size: 12px; color: var(--sub); margin-top: 2px; }
+        .menu-btn { display: none; font-size: 20px; margin-right: 15px; cursor: pointer; color: var(--text); }
+        .header-warn { color: var(--warn); font-weight: 700; margin-left: 8px; font-size: 12px; }
+
+        /* Grid */
+        .grid-vp { flex: 1; overflow: auto; padding: 30px; display: flex; justify-content: center; align-items: flex-start; cursor: grab; background: var(--bg); }
+        .grid-vp.active { cursor: grabbing; }
+        .grid { display: grid; padding: 20px; background: var(--card); border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); margin-bottom: 60px; }
+        .axis { display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--sub); opacity: 0.6; }
+
+        /* Cells */
+        .cell { width: var(--cell-size); height: var(--cell-size); border-radius: 10px; background: var(--cell-bg); border: 1px solid var(--cell-bd); position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
+        .cell:active { transform: scale(0.95); }
+        .cell.empty { border: 1px dashed var(--sub); opacity: 0.2; background: transparent; pointer-events: none; }
         .ring { position: absolute; inset: 4px; border-radius: 50%; z-index: 1; background: var(--ring-bg); }
         .core { position: absolute; inset: 9px; border-radius: 50%; background: #888; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
-        .t-main { font-size: 13px; font-weight: 800; text-shadow: 0 1px 1px rgba(0,0,0,0.2); max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 2px; }
-        .t-sub { font-size: 9px; opacity: 0.95; font-weight: 500; margin-top: 1px; max-width: 80%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-        
-        /* 警示标 */
-        .warn { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; background: var(--warn); border: 2px solid var(--card); border-radius: 50%; z-index: 5; color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-        
-        .cell.dim { opacity: 0.15; filter: grayscale(100%); }
+        .t-main { font-size: 12px; font-weight: 800; text-shadow: 0 1px 1px rgba(0,0,0,0.2); max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .t-sub { font-size: 9px; opacity: 0.9; margin-top: 1px; max-width: 80%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .warn { position: absolute; top: -3px; right: -3px; width: 16px; height: 16px; background: var(--warn); border: 2px solid var(--card); border-radius: 50%; z-index: 5; color: #fff; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .cell.dim { opacity: 0.1; filter: grayscale(100%); }
         .cell.hi { transform: scale(1.15); z-index: 10; box-shadow: 0 0 0 3px var(--primary); border-color: var(--primary); }
 
-        /* 移动端适配 */
         @media (max-width: 768px) {
-            .sidebar { position: absolute; height: 100%; transform: translateX(-100%); width: 85%; box-shadow: 10px 0 30px rgba(0,0,0,0.3); }
+            .sidebar { position: absolute; height: 100%; transform: translateX(-100%); width: 85%; box-shadow: 5px 0 20px rgba(0,0,0,0.2); }
             .sidebar.show { transform: translateX(0); }
             .menu-btn { display: block; }
             .overlay { display: none; position: fixed; inset:0; background: rgba(0,0,0,0.5); z-index: 15; backdrop-filter: blur(2px); }
             .overlay.show { display: block; }
             .grid-vp { padding: 10px; }
-            :root { --cell-size: 50px; --gap: 6px; }
+            :root { --cell-size: 48px; --gap: 5px; }
         }
 
-        /* 弹窗 */
-        .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.5); z-index: 99; display: none; backdrop-filter: blur(3px); }
+        .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.5); z-index: 99; display: none; backdrop-filter: blur(2px); }
         .m-mask.show { display: block; }
-        .modal { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); border-radius: 20px 20px 0 0; padding: 25px; z-index: 100; transform: translateY(100%); transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 -10px 30px rgba(0,0,0,0.3); color: var(--text); border-top: 1px solid var(--border); }
+        .modal { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); border-radius: 16px 16px 0 0; padding: 20px; z-index: 100; transform: translateY(100%); transition: 0.3s; box-shadow: 0 -5px 20px rgba(0,0,0,0.2); color: var(--text); border-top: 1px solid var(--border); }
         .modal.show { transform: translateY(0); }
-        .row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
         .lbl { color: var(--sub); } .val { font-weight: 600; color: var(--text); }
-        .tag { background: rgba(128,128,128,0.1); padding: 3px 8px; border-radius: 6px; font-size: 12px; margin-right: 5px; color: var(--text); border: 1px solid var(--border); }
-        .warn-box { margin-top: 15px; background: #FFF5F5; padding: 12px; border-radius: 8px; font-size: 13px; color: var(--warn); border: 1px solid rgba(217, 48, 37, 0.3); display: flex; align-items: flex-start; }
-        .header-warn { color: var(--warn); font-weight: 700; margin-left: 10px; font-size: 13px; }
-
+        .tag { background: rgba(128,128,128,0.1); padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-right: 4px; color: var(--text); border: 1px solid var(--border); }
+        .warn-box { margin-top: 12px; background: #FFF5F5; padding: 10px; border-radius: 6px; font-size: 12px; color: var(--warn); border: 1px solid rgba(217, 48, 37, 0.3); display: flex; align-items: flex-start; }
+        
         .loading { position: fixed; inset:0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 200; color: var(--sub); }
-        .err { color: var(--warn); background: rgba(255, 69, 58, 0.1); padding: 10px; border-radius: 8px; margin-top: 20px; font-size: 12px; max-width: 80%; display: none; word-break: break-all; }
+        .err { color: var(--warn); background: rgba(255, 69, 58, 0.1); padding: 10px; border-radius: 8px; margin-top: 20px; font-size: 12px; max-width: 80%; display: none; }
     </style>
 </head>
 <body>
@@ -158,7 +136,7 @@
 
 <div class="sidebar" id="sidebar">
     <div class="search-box"><input type="text" class="search-inp" id="search" placeholder="Search..."></div>
-    <div class="list-wrap" id="boxList"></div>
+    <div class="list-wrap" id="treeRoot"></div>
     <div class="legend" id="legend"></div>
 </div>
 
@@ -198,44 +176,36 @@
     vp.addEventListener('mouseup', () => { isDown=false; vp.classList.remove('active'); });
     vp.addEventListener('mousemove', e => { if(!isDown)return; e.preventDefault(); const x=e.pageX-vp.offsetLeft; const y=e.pageY-vp.offsetTop; vp.scrollLeft=sL-(x-sX)*1.5; vp.scrollTop=sT-(y-sY)*1.5; });
 
-    window.onload = function() {
+    window.onload = async function() {
         try {
             const h = window.location.hash.substring(1);
             if(!h) throw "Empty URL";
             let b64 = h.replace(/-/g, '+').replace(/_/g, '/');
-            while(b64.length % 4) b64 += '=';
+            while(b64.length%4) b64+='=';
             const bin = atob(b64);
             const buf = new Uint8Array(bin.length);
             for(let i=0; i<bin.length; i++) buf[i]=bin.charCodeAt(i);
 
             let json;
             try {
-                if(window.fflate) {
-                    const dec = fflate.decompressSync(buf);
-                    json = new TextDecoder().decode(dec);
-                } else if ('DecompressionStream' in window) {
+                if(window.fflate) json = new TextDecoder().decode(fflate.decompressSync(buf));
+                else {
                     const ds = new DecompressionStream('gzip');
-                    const w = new Blob([buf]).stream().pipeThrough(ds);
-                    json = await new Response(w).text();
-                } else { throw "Browser unsupported"; }
+                    json = await new Response(new Blob([buf]).stream().pipeThrough(ds)).text();
+                }
             } catch(e) { json = decodeURIComponent(escape(atob(b64))); }
 
             DATA = JSON.parse(json);
-            
-            // 兼容 V9-V12
-            if(DATA.v >= 9) {
-                DB = DATA.d || DATA.db; 
-                UI = DATA.c.ui || DATA.cfg.ui; 
-                CL = DATA.c.colors || DATA.cfg.colors;
+            if(DATA.v >= 13 || DATA.v >= 9) {
+                DB = DATA.d || DATA.db; UI = DATA.c.ui || DATA.cfg.ui; CL = DATA.c.colors || DATA.cfg.colors;
                 setupUI();
-                init();
-            } else {
-                throw "Version mismatch. Please update software.";
-            }
+                renderTree();
+                renderLegend();
+                if(DB.length > 0) loadBox(DB[0].id);
+                document.getElementById('loading').style.display = 'none';
+            } else throw "Version mismatch";
         } catch(e) {
-            document.getElementById('lt').textContent = "⚠️ Load Failed";
-            document.getElementById('err').style.display='block';
-            document.getElementById('err').textContent = e.toString();
+            document.getElementById('lt').textContent = "⚠️ " + e;
         }
     };
 
@@ -248,12 +218,138 @@
         document.getElementById('l_vl').textContent = UI.fields.vol;
     }
 
-    function init() {
-        document.getElementById('loading').style.display = 'none';
-        renderSidebar();
-        renderLegend();
-        if(DB.length > 0) loadBox(DB[0].id);
+    // === 树形菜单核心逻辑 ===
+    function renderTree() {
+        const root = document.getElementById('treeRoot');
+        root.innerHTML = '';
+        
+        // 1. 构建树结构
+        const tree = { _boxes: [], _folders: {} };
+        DB.forEach(box => {
+            const parts = box.c.split('/').filter(p => p.trim() !== "");
+            let current = tree;
+            parts.forEach(p => {
+                if(!current._folders[p]) current._folders[p] = { _boxes: [], _folders: {} };
+                current = current._folders[p];
+            });
+            current._boxes.push(box);
+        });
+
+        // 2. 递归生成 DOM
+        // depth 用于计算 padding，container 是父节点 DOM
+        function buildNode(node, container, depth=0) {
+            // 先渲染文件夹
+            for (const [name, subNode] of Object.entries(node._folders)) {
+                const folderDiv = document.createElement('div');
+                folderDiv.className = depth > 0 ? "tree-node" : "root-node";
+                
+                const titleDiv = document.createElement('div');
+                titleDiv.className = "folder-row"; // 文件夹样式
+                titleDiv.style.paddingLeft = "8px"; // 内部缩进
+                titleDiv.innerHTML = `<span class="arrow">▶</span> <span class="icon">📂</span> ${name}`;
+                titleDiv.onclick = (e) => {
+                    e.stopPropagation();
+                    titleDiv.classList.toggle('expanded');
+                    const cnt = folderDiv.querySelector('.folder-cnt');
+                    cnt.classList.toggle('open');
+                };
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = "folder-cnt"; // 内容容器，默认隐藏
+                
+                folderDiv.appendChild(titleDiv);
+                folderDiv.appendChild(contentDiv);
+                container.appendChild(folderDiv);
+                
+                // 递归
+                buildNode(subNode, contentDiv, depth+1);
+            }
+            
+            // 再渲染盒子
+            node._boxes.forEach(b => {
+                const boxDiv = document.createElement('div');
+                boxDiv.className = depth > 0 ? "tree-node" : "root-node";
+                
+                const itemDiv = document.createElement('div');
+                itemDiv.className = "tree-item";
+                itemDiv.id = `btn-${b.id}`;
+                itemDiv.innerHTML = `<span class="icon">📦</span> ${b.n} <span class="meta">${b.p}%</span>`;
+                itemDiv.onclick = (e) => {
+                    e.stopPropagation();
+                    loadBox(b.id);
+                    if(window.innerWidth<768) toggleMenu();
+                };
+                
+                boxDiv.appendChild(itemDiv);
+                container.appendChild(boxDiv);
+            });
+        }
+        
+        buildNode(tree, root);
+        
+        // 默认展开第一层
+        root.querySelectorAll(':scope > .root-node > .folder-cnt').forEach(el => el.classList.add('open'));
+        root.querySelectorAll(':scope > .root-node > .folder-row').forEach(el => el.classList.add('expanded'));
     }
+
+    // 搜索逻辑：支持过滤树
+    document.getElementById('search').addEventListener('input', e => {
+        const k = e.target.value.toLowerCase().trim();
+        const allItems = document.querySelectorAll('.tree-item');
+        const allFolders = document.querySelectorAll('.folder-row');
+        
+        if(!k) {
+            // 复原：所有显示，文件夹收起(或者保持原样)
+            // 简单起见，全部显示
+            allItems.forEach(el => el.parentElement.style.display = 'block');
+            allFolders.forEach(el => el.parentElement.style.display = 'block');
+            return;
+        }
+
+        // 隐藏所有
+        allItems.forEach(el => el.parentElement.style.display = 'none');
+        allFolders.forEach(el => el.parentElement.style.display = 'none');
+
+        // 匹配逻辑
+        DB.forEach(b => {
+            if(b.n.toLowerCase().includes(k)) {
+                const btn = document.getElementById(`btn-${b.id}`);
+                if(btn) {
+                    let node = btn.parentElement; // boxDiv
+                    node.style.display = 'block';
+                    
+                    // 向上展开所有父级
+                    let parent = node.parentElement; // folder-cnt
+                    while(parent && parent.id !== 'treeRoot') {
+                        if(parent.classList.contains('folder-cnt')) {
+                            parent.classList.add('open');
+                            parent.style.display = 'block'; // 确保容器显示
+                            
+                            // 显示对应的 folderDiv
+                            const folderDiv = parent.parentElement;
+                            folderDiv.style.display = 'block';
+                            
+                            // 展开箭头
+                            const title = folderDiv.querySelector('.folder-row');
+                            if(title) {
+                                title.classList.add('expanded');
+                                title.style.display = 'flex';
+                            }
+                        }
+                        parent = parent.parentElement;
+                    }
+                }
+            }
+        });
+        
+        // Grid search sync
+        document.querySelectorAll('.cell').forEach(el => {
+            if(el.classList.contains('empty')) return;
+            el.classList.remove('dim','hi');
+            if(el.dataset.txt.includes(k)) el.classList.add('hi'); 
+            else el.classList.add('dim');
+        });
+    });
 
     function renderLegend() {
         const d = document.getElementById('legend');
@@ -268,36 +364,13 @@
         d.innerHTML += html;
     }
 
-    function renderSidebar() {
-        const l = document.getElementById('boxList');
-        l.innerHTML = '';
-        let last = null;
-        DB.forEach(b => {
-            if(b.c !== last) { l.innerHTML += `<div class="cat-head">📂 ${b.c}</div>`; last = b.c; }
-            const el = document.createElement('div');
-            el.className = 'box-row';
-            el.id = `btn-${b.id}`;
-            el.innerHTML = `<div class="b-n">📦 ${b.n}</div><div class="b-p">${b.p}%</div>`;
-            el.onclick = () => { loadBox(b.id); if(window.innerWidth<768) toggleMenu(); };
-            l.appendChild(el);
-        });
-    }
-
-    function createAxis(txt) {
-        const d = document.createElement('div');
-        d.className = 'axis';
-        d.textContent = txt;
-        return d;
-    }
-
     function loadBox(bid) {
         curBox = DB.find(b => b.id === bid);
         if(!curBox) return;
-        document.querySelectorAll('.box-row').forEach(e => e.classList.remove('active'));
+        document.querySelectorAll('.tree-item').forEach(e => e.classList.remove('active'));
         document.getElementById(`btn-${bid}`).classList.add('active');
         document.getElementById('vTitle').textContent = curBox.n;
         
-        // 1. 统计低容量
         let lowList = [];
         curBox.d.forEach(item => {
             let st = item[4], v = item[7], m = item[8];
@@ -306,7 +379,6 @@
                 lowList.push(coord);
             }
         });
-
         const baseMeta = UI.meta_fmt.replace("{s}", curBox.s).replace("{c}", curBox.d.length + "");
         let warnHtml = "";
         if(lowList.length > 0) {
@@ -326,6 +398,7 @@
         const map = new Map();
         curBox.d.forEach(d => map.set(`${d[0]},${d[1]}`, d));
 
+        const createAxis = (t) => { const e=document.createElement('div'); e.className='axis'; e.textContent=t; return e; };
         grid.appendChild(createAxis("")); 
         for(let c=1; c<=C; c++) grid.appendChild(createAxis(c));
 
@@ -336,24 +409,19 @@
                 const item = map.get(`${r},${c}`);
                 if(item) {
                     const [row, col, name, type, st, feat, short, v, vm, op, dt, desc, res, wTxt] = item;
-                    // 加入 s-st 类名以便深色模式 CSS 捕捉
                     el.className = `cell s-${st}`;
-                    // 浅色模式下应用 JS 传来的颜色
                     el.style.backgroundColor = CL.st[st] || '#FFF';
                     
                     let ring = '';
                     if(vm > 0) {
                         let deg = (v/vm)*360; if(isNaN(deg)) deg=0;
                         let rc = (st===0 && (v/vm)<0.3) ? 'var(--warn)' : 'rgba(0,0,0,0.8)';
-                        // 深色模式下圆环轨道需变亮，使用 var(--ring-bg)
                         ring = `<div class="ring" style="background:conic-gradient(${rc} 0deg ${deg}deg, var(--ring-bg) ${deg}deg 360deg)"></div>`;
                     } else { ring = `<div class="ring"></div>`; }
                     
                     let color = (CL.types && CL.types[type]) ? CL.types[type] : '#888';
                     let txt = (short && short.trim()) ? short : name;
-                    
-                    let warn = '';
-                    if (wTxt || (st===0 && vm>0 && (v/vm)<0.1)) warn = `<div class="warn">!</div>`;
+                    let warn = (wTxt || (st===0 && vm>0 && (v/vm)<0.1)) ? `<div class="warn">!</div>` : '';
                     
                     el.innerHTML = `${ring}${warn}<div class="core" style="background:${color}"><div class="t-main">${txt.substring(0,4)}</div>${feat?`<div class="t-sub">${feat.substring(0,5)}</div>`:''}</div>`;
                     el.onclick = () => showM(item, String.fromCharCode(65+r)+(c+1));
@@ -362,24 +430,6 @@
                 grid.appendChild(el);
             }
         }
-        doSearch();
-    }
-
-    document.getElementById('search').addEventListener('input', doSearch);
-    function doSearch() {
-        const k = document.getElementById('search').value.toLowerCase().trim();
-        DB.forEach(b => {
-            const el = document.getElementById(`btn-${b.id}`);
-            el.style.display = (!k || b.n.toLowerCase().includes(k)) ? 'flex' : 'none';
-        });
-        document.querySelectorAll('.cell').forEach(el => {
-            if(el.classList.contains('empty')) return;
-            if(!k) el.classList.remove('dim','hi');
-            else {
-                if(el.dataset.txt.includes(k)) { el.classList.add('hi'); el.classList.remove('dim'); }
-                else { el.classList.add('dim'); el.classList.remove('hi'); }
-            }
-        });
     }
 
     function showM(i, coord) {
@@ -397,8 +447,7 @@
 
         const stEl = document.getElementById('mStatus');
         stEl.textContent = UI.st_txt[st];
-        // 状态文字在深色模式下需反白，使用 var(--text) 或特定色
-        stEl.style.color = (st===0?'#2E7D32':(st===1?'#EF6C00':'#C62828'));
+        stEl.style.color = (st===0?'var(--text)':(st===1?'#E65100':'#C62828'));
         
         document.getElementById('mOp').textContent = op||'-';
         document.getElementById('mDate').textContent = dt||'-';
