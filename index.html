@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CryoMaster View</title>
+    <script src="https://unpkg.com/fflate@0.8.0"></script>
     <style>
         :root {
-            --bg: #F2F4F7; --card: #FFF; --text: #333; --border: #E5E5EA;
+            --bg: #F5F7FA; --card: #FFF; --text: #333; --border: #E5E5EA;
             --primary: #007AFF; --warn: #D93025;
-            --cell-size: 100px; --gap: 10px;
+            --cell-size: 72px; --gap: 8px;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; display: flex; overflow: hidden; }
@@ -39,10 +40,26 @@
         .h-sub { font-size: 13px; color: #888; margin-top: 2px; }
         .menu-btn { display: none; font-size: 24px; margin-right: 15px; cursor: pointer; }
 
-        /* 网格 */
-        .grid-vp { flex: 1; overflow: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; cursor: grab; background: #F2F4F7; }
+        /* 网格画布 */
+        .grid-vp { flex: 1; overflow: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; cursor: grab; background: #F5F7FA; }
         .grid-vp.active { cursor: grabbing; }
-        .grid { display: grid; gap: var(--gap); padding: 20px; background: #fff; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); margin-bottom: 80px; }
+        
+        /* 核心 Grid 容器 */
+        .grid { 
+            display: grid; 
+            /* gap 由 JS 动态控制 */
+            padding: 20px; 
+            background: #fff; border-radius: 20px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08); 
+            margin-bottom: 80px; 
+        }
+
+        /* 坐标轴 */
+        .axis {
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 700; color: #999;
+            user-select: none;
+        }
 
         /* 细胞样式 */
         .cell { width: var(--cell-size); height: var(--cell-size); border-radius: 12px; background: #FFF; border: 1px solid #EAEAEA; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
@@ -53,8 +70,8 @@
         .t-main { font-size: 13px; font-weight: 800; text-shadow: 0 1px 1px rgba(0,0,0,0.2); max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 2px; }
         .t-sub { font-size: 9px; opacity: 0.95; font-weight: 500; margin-top: 1px; max-width: 80%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
         
-        /* 警告标 (右上角叹号) */
-        .warn { position: absolute; top: -2px; right: -2px; width: 18px; height: 18px; background: var(--warn); border: 2px solid #fff; border-radius: 50%; z-index: 5; color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        /* 警示标 (右上角叹号) */
+        .warn { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; background: var(--warn); border: 2px solid #fff; border-radius: 50%; z-index: 5; color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
         
         .cell.dim { opacity: 0.15; filter: grayscale(100%); }
         .cell.hi { transform: scale(1.15); z-index: 10; box-shadow: 0 0 0 3px #007AFF; border-color: #007AFF; }
@@ -65,8 +82,8 @@
             .menu-btn { display: block; }
             .overlay { display: none; position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 15; }
             .overlay.show { display: block; }
-            .grid-vp { padding: 20px; }
-            :root { --cell-size: 64px; --gap: 8px; }
+            .grid-vp { padding: 10px; }
+            :root { --cell-size: 60px; --gap: 6px; }
         }
 
         /* 弹窗 */
@@ -149,12 +166,12 @@
             const jsonStr = decodeURIComponent(escape(atob(b64)));
             DATA = JSON.parse(jsonStr);
             
-            if(DATA.v === 9) { // 检查版本 9
+            if(DATA.v === 9) {
                 DB = DATA.d; UI = DATA.c.ui; CL = DATA.c.colors;
                 setupUI();
                 init();
             } else {
-                throw "Version mismatch. Please update software and re-generate link.";
+                throw "Version mismatch. Please update software.";
             }
         } catch(e) {
             document.getElementById('lt').textContent = "⚠️ Load Failed";
@@ -217,19 +234,31 @@
 
         let R=9, C=9;
         try { [R, C] = curBox.s.split('x').map(Number); } catch(e){}
+        
+        // === Grid 布局设置 (C+1 列, 30px 是坐标轴宽度) ===
         const grid = document.getElementById('grid');
-        grid.style.gridTemplateColumns = `repeat(${C}, var(--cell-size))`;
+        grid.style.gridTemplateColumns = `30px repeat(${C}, var(--cell-size))`;
+        grid.style.gap = "var(--gap)";
         grid.innerHTML = '';
 
         const map = new Map();
         curBox.d.forEach(d => map.set(`${d[0]},${d[1]}`, d));
 
+        // 1. 顶部表头 (0,0为空)
+        grid.appendChild(createAxis(""));
+        for(let c=1; c<=C; c++) grid.appendChild(createAxis(c));
+
+        // 2. 数据行
         for(let r=0; r<R; r++){
+            // 左侧行号 (A, B, C...)
+            grid.appendChild(createAxis(String.fromCharCode(65+r)));
+
+            // 实际数据格
             for(let c=0; c<C; c++){
                 const el = document.createElement('div');
                 const item = map.get(`${r},${c}`);
                 if(item) {
-                    // [NEW] 解构增加 wTxt (Index 13)
+                    // 解构数据 (14项)
                     const [row, col, name, type, st, feat, short, v, vm, op, dt, desc, res, wTxt] = item;
                     el.className = 'cell';
                     el.style.backgroundColor = CL.st[st] || '#FFF';
@@ -244,7 +273,7 @@
                     let color = (CL.types && CL.types[type]) ? CL.types[type] : '#888';
                     let txt = (short && short.trim()) ? short : name;
                     
-                    // [NEW] 警示标记逻辑：有警示文本 OR 低容量
+                    // 警示标记 (Warning OR Low Vol)
                     let warn = '';
                     if (wTxt || (st===0 && vm>0 && (v/vm)<0.3)) {
                         warn = `<div class="warn">!</div>`;
@@ -258,6 +287,13 @@
             }
         }
         doSearch();
+    }
+
+    function createAxis(text) {
+        const el = document.createElement('div');
+        el.className = 'axis';
+        el.textContent = text;
+        return el;
     }
 
     document.getElementById('search').addEventListener('input', doSearch);
@@ -278,14 +314,13 @@
     }
 
     function showM(i, coord) {
-        // [NEW] 解构增加 wTxt
         const [r, c, name, type, st, feat, short, v, vm, op, dt, desc, res, wTxt] = i;
         document.getElementById('mCoord').textContent = coord;
         document.getElementById('mCoord').style.backgroundColor = (CL.types && CL.types[type]) ? CL.types[type] : '#888';
         document.getElementById('mName').textContent = name;
         document.getElementById('mType').textContent = type + (short?` (${short})`:'');
         
-        // [NEW] 显示警示信息块
+        // 显示警示
         const wBox = document.getElementById('mWarn');
         if(wTxt) {
             wBox.style.display = 'flex';
