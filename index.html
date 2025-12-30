@@ -8,6 +8,9 @@
         :root {
             --bg: #F0F2F5; --card: #FFF; --text: #333; --sub: #888;
             --primary: #007AFF; --border: #E5E5EA;
+            /* [修改] 格子尺寸加大 */
+            --cell-size: 50px; 
+            --cell-gap: 8px;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
@@ -23,92 +26,133 @@
             width: 280px; background: #fff; display: flex; flex-direction: column;
             border-right: 1px solid #ddd; z-index: 20;
             transition: transform 0.3s;
+            flex-shrink: 0;
         }
-        .search-area { padding: 15px; border-bottom: 1px solid #eee; }
+        .search-area { padding: 20px; border-bottom: 1px solid #f0f0f0; }
         .search-inp {
-            width: 100%; padding: 10px 12px; border-radius: 8px;
-            border: none; background: #F0F2F5; font-size: 14px; outline: none;
+            width: 100%; padding: 12px 16px; border-radius: 12px;
+            border: none; background: #F5F7FA; font-size: 15px; outline: none;
+            color: var(--text);
         }
         
-        .box-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .box-list { flex: 1; overflow-y: auto; padding: 15px; }
         .cat-title { 
-            font-size: 12px; font-weight: bold; color: #999; 
-            margin: 15px 0 5px 8px; text-transform: uppercase; 
+            font-size: 13px; font-weight: 700; color: #999; 
+            margin: 20px 0 8px 10px; text-transform: uppercase; letter-spacing: 0.5px;
         }
         .box-item {
-            padding: 12px; border-radius: 10px; margin-bottom: 6px; cursor: pointer;
-            transition: 0.2s; display: flex; justify-content: space-between;
+            padding: 14px 16px; border-radius: 12px; margin-bottom: 8px; cursor: pointer;
+            transition: 0.2s; display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid transparent;
         }
         .box-item:hover { background: #F5F7FA; }
-        .box-item.active { background: #E3F2FD; color: var(--primary); font-weight: 600; }
+        /* 选中态：淡蓝背景+蓝色文字+蓝色边框 */
+        .box-item.active { 
+            background: #E3F2FD; color: var(--primary); 
+            border-color: #BBDEFB; font-weight: 600; 
+        }
         
-        .b-name { font-size: 14px; }
-        .b-info { font-size: 12px; opacity: 0.7; }
+        .b-name { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+        .b-info { font-size: 13px; opacity: 0.7; }
 
         /* === 主区域 === */
         .main { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; }
         
         .header {
-            padding: 15px 20px; background: #fff; border-bottom: 1px solid #eee;
+            padding: 20px 30px; background: #fff; border-bottom: 1px solid #eee;
             display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
         }
-        .h-title { font-size: 18px; font-weight: 800; }
-        .h-sub { font-size: 13px; color: var(--sub); }
+        .h-title { font-size: 24px; font-weight: 800; color: #111; }
+        .h-sub { font-size: 14px; color: var(--sub); margin-top: 4px; }
         
-        .menu-btn { display: none; font-size: 20px; cursor: pointer; margin-right: 15px; }
+        .menu-btn { display: none; font-size: 24px; cursor: pointer; margin-right: 20px; color: var(--text); }
 
         /* 网格 */
-        .grid-view { flex: 1; overflow: auto; padding: 20px; display: flex; justify-content: center; align-items: flex-start; }
-        .grid { display: grid; gap: 6px; padding-bottom: 50px; }
+        .grid-view { 
+            flex: 1; overflow: auto; padding: 30px; 
+            display: flex; justify-content: center; align-items: flex-start; 
+        }
+        
+        /* 网格容器 */
+        .grid { 
+            display: grid; 
+            gap: var(--cell-gap); 
+            padding-bottom: 80px; /* 底部留白 */
+        }
         
         .cell {
-            width: 42px; height: 42px; border-radius: 8px; background: #FFF;
-            border: 1px solid #EEE; display: flex; align-items: center; justify-content: center;
-            font-size: 11px; font-weight: 700; color: #fff; position: relative; cursor: pointer;
+            width: var(--cell-size); height: var(--cell-size); 
+            border-radius: 12px; background: #FFF;
+            border: 1px solid #EEE; 
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 700; color: #fff; 
+            position: relative; cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
         }
-        .cell.filled { border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-        .cell:active { transform: scale(0.9); }
-        .cell.empty { background: transparent; border: 1px dashed #CCC; color: transparent; pointer-events: none; }
-        .cell.dim { opacity: 0.1; filter: grayscale(100%); }
-        .cell.hi { transform: scale(1.1); z-index: 5; box-shadow: 0 0 0 3px #FFD60A; }
+        .cell.filled { border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        .cell:active { transform: scale(0.95); }
+        .cell:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); z-index: 10; }
+        
+        .cell.empty { background: transparent; border: 1px dashed #D0D0D0; color: transparent; pointer-events: none; }
+        .cell.dim { opacity: 0.15; filter: grayscale(100%); }
+        .cell.hi { transform: scale(1.15); z-index: 20; box-shadow: 0 0 0 3px #FFD60A, 0 10px 20px rgba(0,0,0,0.2); }
+
+        /* 状态点 */
+        .st-dot {
+            position: absolute; top: -4px; right: -4px;
+            width: 12px; height: 12px; border-radius: 50%;
+            border: 2px solid #F0F2F5; /* 与背景色一致造成镂空感 */
+        }
 
         /* 移动端适配 */
         @media (max-width: 768px) {
-            .sidebar { position: absolute; height: 100%; transform: translateX(-100%); width: 80%; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+            .sidebar { position: absolute; height: 100%; transform: translateX(-100%); width: 85%; box-shadow: 10px 0 30px rgba(0,0,0,0.15); }
             .sidebar.open { transform: translateX(0); }
             .menu-btn { display: block; }
-            .overlay { display: none; position: fixed; inset:0; background: rgba(0,0,0,0.3); z-index: 15; }
+            .overlay { display: none; position: fixed; inset:0; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); z-index: 15; }
             .overlay.show { display: block; }
+            .grid-view { padding: 15px; align-items: center; } /* 手机上居中 */
+            
+            /* 手机上格子稍微调小一点点以免撑破屏幕 */
+            :root { --cell-size: 44px; --cell-gap: 6px; }
         }
 
         /* 弹窗 */
         .modal { 
             position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; 
-            border-radius: 20px 20px 0 0; padding: 24px; z-index: 100;
-            transform: translateY(100%); transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            border-radius: 24px 24px 0 0; padding: 30px 24px; z-index: 100;
+            transform: translateY(100%); transition: 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
         }
         .modal.show { transform: translateY(0); }
-        .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.3); z-index: 99; display: none; }
+        .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 99; display: none; transition: opacity 0.3s; }
         .m-mask.show { display: block; }
 
-        .tag { background: #F0F2F5; padding: 3px 8px; border-radius: 6px; font-size: 12px; margin-right: 5px; }
-        .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
+        .tag { background: #F0F2F5; padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #444; }
+        .tag.feat { background: #E3F2FD; color: #1565C0; }
         
-        .loading { position: fixed; inset:0; display: flex; align-items: center; justify-content: center; background: #f0f2f5; z-index: 200; }
+        .row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #F5F5F5; font-size: 15px; }
+        .row:last-child { border-bottom: none; }
+        
+        .loading { position: fixed; inset:0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f0f2f5; z-index: 200; color: #888; }
     </style>
 </head>
 <body>
 
-<div id="loading" class="loading">正在解压数据...</div>
+<div id="loading" class="loading">
+    <div style="font-size:24px; margin-bottom:10px">📦</div>
+    <div>正在加载数据...</div>
+</div>
 
 <div class="overlay" onclick="toggleMenu()"></div>
 
 <div class="sidebar" id="sidebar">
     <div class="search-area">
-        <input type="text" class="search-inp" id="globalSearch" placeholder="🔍 搜索全库 (名称/类型/备注)">
+        <input type="text" class="search-inp" id="globalSearch" placeholder="🔍 搜索全库 (名称/简写/备注)">
     </div>
-    <div class="box-list" id="boxList"></div>
+    <div class="box-list" id="boxList">
+        </div>
 </div>
 
 <div class="main">
@@ -116,8 +160,8 @@
         <div style="display:flex; align-items:center">
             <span class="menu-btn" onclick="toggleMenu()">☰</span>
             <div>
-                <div class="h-title" id="vTitle">选择盒子</div>
-                <div class="h-sub" id="vMeta">-</div>
+                <div class="h-title" id="vTitle">请选择盒子</div>
+                <div class="h-sub" id="vMeta">点击左侧列表查看详情</div>
             </div>
         </div>
     </div>
@@ -128,48 +172,56 @@
 
 <div class="m-mask" onclick="closeM()"></div>
 <div class="modal" id="modal">
-    <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-        <span id="mCoord" style="background:#007AFF;color:#fff;padding:4px 10px;border-radius:8px;font-weight:bold">A1</span>
-        <span onclick="closeM()" style="font-size:24px;color:#999;cursor:pointer">&times;</span>
+    <div style="display:flex; justify-content:space-between; margin-bottom:20px; align-items:center;">
+        <span id="mCoord" style="background:#007AFF;color:#fff;padding:6px 12px;border-radius:10px;font-weight:800;font-size:16px;">A1</span>
+        <span onclick="closeM()" style="font-size:28px;color:#CCC;cursor:pointer;line-height:1;">&times;</span>
     </div>
-    <h3 id="mName" style="margin:0 0 5px 0">Sample</h3>
-    <div id="mType" style="color:#888; font-size:13px; margin-bottom:15px">Type</div>
     
-    <div class="row"><span style="color:#888">状态</span><span id="mStatus">-</span></div>
-    <div class="row"><span style="color:#888">操作人</span><span id="mOp">-</span></div>
-    <div class="row"><span style="color:#888">日期</span><span id="mDate">-</span></div>
-    <div class="row"><span style="color:#888">体积</span><span id="mVol">-</span></div>
+    <h3 id="mName" style="margin:0 0 6px 0; font-size:22px; color:#111;">Sample</h3>
+    <div id="mType" style="color:#888; font-size:14px; font-weight:500; margin-bottom:20px;">Type</div>
     
-    <div id="mTags" style="margin-top:15px; display:flex; gap:5px; flex-wrap:wrap"></div>
-    <div id="mDesc" style="margin-top:15px; background:#f9f9f9; padding:10px; border-radius:8px; font-size:13px; color:#666; display:none"></div>
+    <div class="row"><span style="color:#888">状态</span><span id="mStatus" style="font-weight:600">-</span></div>
+    <div class="row"><span style="color:#888">操作人</span><span id="mOp" style="font-weight:600">-</span></div>
+    <div class="row"><span style="color:#888">日期</span><span id="mDate" style="font-weight:600">-</span></div>
+    <div class="row"><span style="color:#888">体积</span><span id="mVol" style="font-weight:600">-</span></div>
+    
+    <div id="mTags" style="margin-top:20px; display:flex; gap:8px; flex-wrap:wrap"></div>
+    
+    <div id="mDesc" style="margin-top:20px; background:#F9FAFB; padding:15px; border-radius:12px; font-size:14px; color:#555; line-height:1.5; display:none; border:1px solid #EEE;"></div>
 </div>
 
 <script>
-    const COLORS = { "DNA": "#1967D2", "RNA": "#A50E0E", "Protein": "#E37400", "Cell": "#188038", "Bacteria": "#F29900", "Other": "#5F6368" };
-    let DB = [];
+    const COLORS = { 
+        "DNA": "#1967D2", "RNA": "#A50E0E", "Protein": "#E37400", 
+        "Cell": "#188038", "Bacteria": "#F29900", "Other": "#5F6368" 
+    };
+    
+    let DB = []; // 存储所有盒子数据
     let curBox = null;
 
     window.onload = function() {
         try {
             const hash = window.location.hash.substring(1);
             if(!hash) throw "No Data";
-            // 1. 解码
+            
             const jsonStr = decodeURIComponent(escape(window.atob(hash)));
             let data = JSON.parse(jsonStr);
             
-            // 兼容性处理：如果是旧版单盒子对象，转为数组
+            // 兼容性处理：如果是单对象（旧版链接），转为数组
             if(!Array.isArray(data)) data = [data];
             
             DB = data;
             initUI();
         } catch(e) {
-            document.getElementById('loading').innerHTML = "无数据或链接错误";
+            document.getElementById('loading').innerHTML = 
+                '<div style="text-align:center">🔗<br>无效的链接或数据<br><small>请重新生成二维码</small></div>';
         }
     };
 
     function initUI() {
         document.getElementById('loading').style.display = 'none';
         renderSidebar();
+        // 默认打开第一个盒子
         if(DB.length > 0) loadBox(DB[0].id);
     }
 
@@ -178,16 +230,28 @@
         list.innerHTML = '';
         let lastCat = null;
         
+        // 确保数据按分类排序 (Python端已经排过了，但为了保险)
+        // DB.sort((a,b) => a.c.localeCompare(b.c));
+
         DB.forEach(b => {
+            // 分类标题
             if(b.c !== lastCat) {
                 list.innerHTML += `<div class="cat-title">📂 ${b.c}</div>`;
                 lastCat = b.c;
             }
+            
             const el = document.createElement('div');
             el.className = 'box-item';
             el.id = `btn-${b.id}`;
-            el.innerHTML = `<span class="b-name">📦 ${b.n}</span><span class="b-info">${b.p}%</span>`;
-            el.onclick = () => { loadBox(b.id); if(window.innerWidth<768) toggleMenu(); };
+            // 占用率样式
+            el.innerHTML = `
+                <span class="b-name">📦 ${b.n}</span>
+                <span class="b-info">${b.p}%</span>
+            `;
+            el.onclick = () => { 
+                loadBox(b.id); 
+                if(window.innerWidth < 768) toggleMenu(); // 手机端点击后自动收起菜单
+            };
             list.appendChild(el);
         });
     }
@@ -196,16 +260,20 @@
         curBox = DB.find(b => b.id === bid);
         if(!curBox) return;
 
-        // UI 更新
+        // 1. 高亮侧边栏
         document.querySelectorAll('.box-item').forEach(e => e.classList.remove('active'));
         document.getElementById(`btn-${bid}`).classList.add('active');
+        
+        // 2. 更新头部信息
         document.getElementById('vTitle').textContent = curBox.n;
         document.getElementById('vMeta').textContent = `${curBox.s} • ${curBox.d.length} 样本`;
 
-        // 渲染网格
+        // 3. 渲染网格
         const [R, C] = curBox.s.split('x').map(Number);
         const grid = document.getElementById('grid');
-        grid.style.gridTemplateColumns = `repeat(${C}, 42px)`;
+        
+        // 动态设置列数，格子宽度由 CSS var(--cell-size) 控制
+        grid.style.gridTemplateColumns = `repeat(${C}, var(--cell-size))`;
         grid.innerHTML = '';
 
         const map = new Map();
@@ -222,14 +290,16 @@
                     const [row, col, name, type, st] = item;
                     el.className = 'cell filled';
                     el.style.backgroundColor = COLORS[type] || '#666';
-                    el.textContent = name.substring(0,3);
+                    el.textContent = name.substring(0,3); // 简写
                     
-                    if(st===1) el.innerHTML += '<div style="position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:#FF9500;border-radius:50%;border:1px solid #fff"></div>';
-                    if(st===2) el.innerHTML += '<div style="position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:#FF3B30;border-radius:50%;border:1px solid #fff"></div>';
+                    // 状态点 (右上角)
+                    if(st===1) el.innerHTML += '<div class="st-dot" style="background:#FF9500"></div>';
+                    if(st===2) el.innerHTML += '<div class="st-dot" style="background:#FF3B30"></div>';
                     
                     el.onclick = () => showM(item, coord);
-                    // 搜索元数据
-                    el.dataset.txt = item.join(' ').toLowerCase() + ' ' + coord.toLowerCase();
+                    
+                    // 绑定搜索元数据 (小写)
+                    el.dataset.txt = (item.join(' ') + ' ' + coord).toLowerCase();
                 } else {
                     el.className = 'cell empty';
                 }
@@ -237,36 +307,38 @@
             }
         }
         
-        // 触发一次搜索以应用过滤
+        // 如果搜索框里有字，切盒子时也要重新过滤一遍
         doSearch();
     }
 
-    // 搜索逻辑
+    // 全局搜索逻辑
     document.getElementById('globalSearch').addEventListener('input', doSearch);
     
     function doSearch() {
         const k = document.getElementById('globalSearch').value.toLowerCase().trim();
         
-        // 1. 筛选左侧列表
+        // 1. 筛选左侧侧边栏 (盒子)
         DB.forEach(b => {
             const btn = document.getElementById(`btn-${b.id}`);
-            const matchName = b.n.toLowerCase().includes(k);
-            const matchData = b.d.some(d => d.join(' ').toLowerCase().includes(k));
+            // 匹配规则：盒子名匹配 OR 盒子里的样本匹配
+            const matchBoxName = b.n.toLowerCase().includes(k);
+            const matchContent = b.d.some(d => d.join(' ').toLowerCase().includes(k));
             
-            if(!k || matchName || matchData) {
+            if(!k || matchBoxName || matchContent) {
                 btn.style.display = 'flex';
-                btn.style.opacity = matchData && k ? '1' : (!k ? '1' : '0.5'); // 内容匹配高亮
+                // 如果是内容匹配，给个透明度提示，如果是名字匹配则全亮
+                btn.style.opacity = (k && !matchBoxName && matchContent) ? '0.6' : '1';
             } else {
                 btn.style.display = 'none';
             }
         });
 
-        // 2. 高亮当前网格
+        // 2. 高亮右侧网格 (样本)
         document.querySelectorAll('.cell.filled').forEach(el => {
             if(!k) {
                 el.classList.remove('dim', 'hi');
             } else {
-                if(el.dataset.txt.includes(k)) {
+                if(el.dataset.txt && el.dataset.txt.includes(k)) {
                     el.classList.add('hi'); el.classList.remove('dim');
                 } else {
                     el.classList.add('dim'); el.classList.remove('hi');
@@ -276,27 +348,46 @@
     }
 
     function showM(i, coord) {
+        // 数据解构: [r, c, Name, Type, Status, Feature, Res, Op, Date, Desc, Vol, MaxVol]
         document.getElementById('mCoord').textContent = coord;
         document.getElementById('mCoord').style.backgroundColor = COLORS[i[3]] || '#666';
+        
         document.getElementById('mName').textContent = i[2];
         document.getElementById('mType').textContent = i[3] + (i[5] ? ` | ${i[5]}` : '');
         
-        const sts = ["在库", "取出", "报废"];
-        document.getElementById('mStatus').textContent = sts[i[4]];
+        const sts = ["在库 (In Stock)", "取出 (Removed)", "报废 (Discarded)"];
+        const stEl = document.getElementById('mStatus');
+        stEl.textContent = sts[i[4]];
+        stEl.style.color = i[4]===0 ? '#34C759' : (i[4]===1 ? '#FF9500' : '#FF3B30');
+        
         document.getElementById('mOp').textContent = i[7] || '-';
         document.getElementById('mDate').textContent = i[8] || '-';
         
+        // 体积
         let vol = '-';
-        if(i[11] > 0) vol = `${i[10]} / ${i[11]} μL`;
-        document.getElementById('mVol').textContent = vol;
+        if(i[11] > 0) {
+            const pct = Math.round((i[10]/i[11])*100);
+            vol = `${i[10]} / ${i[11]} μL (${pct}%)`;
+        }
+        const volEl = document.getElementById('mVol');
+        volEl.textContent = vol;
+        volEl.style.color = (i[11]>0 && (i[10]/i[11])<0.3 && i[4]===0) ? '#D93025' : 'inherit'; // 低容量标红
         
-        const tags = document.getElementById('mTags');
-        tags.innerHTML = '';
-        if(i[6]) i[6].split(',').forEach(t => tags.innerHTML += `<span class="tag">💊 ${t}</span>`);
+        // 标签
+        const tagBox = document.getElementById('mTags');
+        tagBox.innerHTML = '';
+        if(i[6]) {
+            i[6].split(',').forEach(t => {
+                if(t) tagBox.innerHTML += `<span class="tag">💊 ${t}</span>`;
+            });
+        }
         
+        // 备注
         const dBox = document.getElementById('mDesc');
-        if(i[9]) { dBox.style.display='block'; dBox.textContent=i[9]; } else dBox.style.display='none';
+        if(i[9]) { dBox.style.display='block'; dBox.textContent=i[9]; } 
+        else dBox.style.display='none';
 
+        // 显示动画
         document.querySelector('.m-mask').classList.add('show');
         document.querySelector('.modal').classList.add('show');
     }
