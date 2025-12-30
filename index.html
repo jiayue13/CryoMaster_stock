@@ -7,8 +7,8 @@
     <style>
         :root {
             --bg: #F2F4F7; --card: #FFF; --text: #333; --border: #E5E5EA;
-            --primary: #007AFF;
-            --cell-size: 72px; --gap: 10px;
+            --primary: #007AFF; --warn: #D93025;
+            --cell-size: 100px; --gap: 10px;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; display: flex; overflow: hidden; }
@@ -17,14 +17,12 @@
         .sidebar { width: 320px; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; z-index: 20; flex-shrink: 0; transition: transform 0.3s; }
         .search-box { padding: 15px; border-bottom: 1px solid #eee; }
         .search-inp { width: 100%; padding: 10px 12px; border-radius: 8px; border: none; background: #F5F7FA; font-size: 14px; outline: none; }
-        
         .list-wrap { flex: 1; overflow-y: auto; padding: 10px; }
         .cat-head { font-size: 12px; font-weight: bold; color: #aaa; margin: 15px 0 5px 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-        
         .box-row { padding: 12px; margin-bottom: 4px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.1s; }
         .box-row:hover { background: #F5F7FA; }
         .box-row.active { background: #E3F2FD; color: var(--primary); font-weight: 600; }
-        .b-n { font-size: 14px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 180px; }
+        .b-n { font-size: 14px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 200px; }
         .b-p { font-size: 12px; opacity: 0.6; }
 
         /* 图例 */
@@ -32,8 +30,7 @@
         .leg-title { font-size: 12px; font-weight: bold; color: #999; margin-bottom: 10px; }
         .leg-grid { display: flex; flex-wrap: wrap; gap: 10px; }
         .leg-item { display: flex; align-items: center; font-size: 12px; color: #555; width: 45%; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
-        .dot-st { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
+        .dot, .dot-st { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
 
         /* 主区域 */
         .main { flex: 1; display: flex; flex-direction: column; position: relative; }
@@ -47,25 +44,18 @@
         .grid-vp.active { cursor: grabbing; }
         .grid { display: grid; gap: var(--gap); padding: 20px; background: #fff; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); margin-bottom: 80px; }
 
-        /* === 细胞样式 (复刻软件) === */
+        /* 细胞样式 */
         .cell { width: var(--cell-size); height: var(--cell-size); border-radius: 12px; background: #FFF; border: 1px solid #EAEAEA; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
         .cell:active { transform: scale(0.95); }
         .cell.empty { border: 1px dashed #DDD; background: #FAFAFA; pointer-events: none; }
-        
-        /* 圆环 (加深颜色) */
         .ring { position: absolute; inset: 4px; border-radius: 50%; z-index: 1; background: rgba(0,0,0,0.08); }
-        
-        /* 核心 */
         .core { position: absolute; inset: 9px; border-radius: 50%; background: #888; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
-        
-        /* 文字截断优化 */
         .t-main { font-size: 13px; font-weight: 800; text-shadow: 0 1px 1px rgba(0,0,0,0.2); max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 2px; }
         .t-sub { font-size: 9px; opacity: 0.95; font-weight: 500; margin-top: 1px; max-width: 80%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
         
-        /* 警告标 */
-        .warn { position: absolute; top: 0; right: 0; width: 14px; height: 14px; background: #D93025; border: 2px solid #fff; border-radius: 50%; z-index: 5; }
+        /* 警告标 (右上角叹号) */
+        .warn { position: absolute; top: -2px; right: -2px; width: 18px; height: 18px; background: var(--warn); border: 2px solid #fff; border-radius: 50%; z-index: 5; color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
         
-        /* 状态 */
         .cell.dim { opacity: 0.15; filter: grayscale(100%); }
         .cell.hi { transform: scale(1.15); z-index: 10; box-shadow: 0 0 0 3px #007AFF; border-color: #007AFF; }
 
@@ -79,6 +69,7 @@
             :root { --cell-size: 64px; --gap: 8px; }
         }
 
+        /* 弹窗 */
         .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 99; display: none; backdrop-filter: blur(2px); }
         .m-mask.show { display: block; }
         .modal { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; border-radius: 20px 20px 0 0; padding: 25px; z-index: 100; transform: translateY(100%); transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 -10px 30px rgba(0,0,0,0.15); }
@@ -86,8 +77,13 @@
         .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #F5F5F5; font-size: 14px; }
         .lbl { color: #888; } .val { font-weight: 600; color: #333; }
         .tag { background: #F0F2F5; padding: 3px 8px; border-radius: 6px; font-size: 12px; margin-right: 5px; color: #555; border: 1px solid #EEE; }
+        
+        /* 警示信息块 */
+        .warn-box { margin-top: 15px; background: #FFF5F5; padding: 12px; border-radius: 8px; font-size: 13px; color: var(--warn); border: 1px solid #FFCDD2; display: flex; align-items: flex-start; }
+        .warn-icon { margin-right: 8px; font-size: 16px; }
+        
         .loading { position: fixed; inset:0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #F0F2F5; z-index: 200; color: #888; }
-        .err { color: #D93025; background: #FFEBEE; padding: 10px; border-radius: 8px; margin-top: 20px; font-size: 12px; max-width: 80%; display: none; }
+        .err { color: var(--warn); background: #FFEBEE; padding: 10px; border-radius: 8px; margin-top: 20px; font-size: 12px; max-width: 80%; display: none; }
     </style>
 </head>
 <body>
@@ -124,6 +120,9 @@
     </div>
     <h3 id="mName" style="margin:0 0 5px 0; font-size:18px">-</h3>
     <div id="mType" style="color:#888; font-size:13px; margin-bottom:15px">-</div>
+    
+    <div id="mWarn" class="warn-box" style="display:none"></div>
+    
     <div class="row"><span class="lbl" id="l_st">St</span><span class="val" id="mStatus">-</span></div>
     <div class="row"><span class="lbl" id="l_op">Op</span><span class="val" id="mOp">-</span></div>
     <div class="row"><span class="lbl" id="l_dt">Dt</span><span class="val" id="mDate">-</span></div>
@@ -145,21 +144,17 @@
         try {
             const h = window.location.hash.substring(1);
             if(!h) throw "Empty URL";
-            
-            // 1. Base64 补全与解码
             let b64 = h.replace(/-/g, '+').replace(/_/g, '/');
             while(b64.length % 4) b64 += '=';
             const jsonStr = decodeURIComponent(escape(atob(b64)));
-            
             DATA = JSON.parse(jsonStr);
             
-            // 2. 版本检查
-            if(DATA.v === 8) {
+            if(DATA.v === 9) { // 检查版本 9
                 DB = DATA.d; UI = DATA.c.ui; CL = DATA.c.colors;
                 setupUI();
                 init();
             } else {
-                throw "Old version. Please re-generate link.";
+                throw "Version mismatch. Please update software and re-generate link.";
             }
         } catch(e) {
             document.getElementById('lt').textContent = "⚠️ Load Failed";
@@ -187,19 +182,12 @@
     function renderLegend() {
         const d = document.getElementById('legend');
         d.innerHTML = `<div class="leg-title">${UI.legend}</div>`;
-        
         let html = `<div class="leg-grid" style="margin-bottom:12px">`;
         html += `<div class="leg-item"><div class="dot-st" style="background:${CL.st[0]}"></div>${UI.st_txt[0]}</div>`;
         html += `<div class="leg-item"><div class="dot-st" style="background:${CL.st[1]}"></div>${UI.st_txt[1]}</div>`;
         html += `<div class="leg-item"><div class="dot-st" style="background:${CL.st[2]}"></div>${UI.st_txt[2]}</div>`;
-        html += `</div>`;
-        
-        html += `<div class="leg-grid">`;
-        if (CL.types) {
-            for(let [k,v] of Object.entries(CL.types)) {
-                html += `<div class="leg-item"><div class="dot" style="background:${v}"></div>${k}</div>`;
-            }
-        }
+        html += `</div><div class="leg-grid">`;
+        if (CL.types) { for(let [k,v] of Object.entries(CL.types)) html += `<div class="leg-item"><div class="dot" style="background:${v}"></div>${k}</div>`; }
         html += `</div>`;
         d.innerHTML += html;
     }
@@ -225,13 +213,10 @@
         document.querySelectorAll('.box-row').forEach(e => e.classList.remove('active'));
         document.getElementById(`btn-${bid}`).classList.add('active');
         document.getElementById('vTitle').textContent = curBox.n;
-        
-        let c_str = curBox.d.length + "";
-        document.getElementById('vMeta').textContent = UI.meta_fmt.replace("{s}", curBox.s).replace("{c}", c_str);
+        document.getElementById('vMeta').textContent = UI.meta_fmt.replace("{s}", curBox.s).replace("{c}", curBox.d.length + "");
 
         let R=9, C=9;
         try { [R, C] = curBox.s.split('x').map(Number); } catch(e){}
-        
         const grid = document.getElementById('grid');
         grid.style.gridTemplateColumns = `repeat(${C}, var(--cell-size))`;
         grid.innerHTML = '';
@@ -242,39 +227,33 @@
         for(let r=0; r<R; r++){
             for(let c=0; c<C; c++){
                 const el = document.createElement('div');
-                const k = `${r},${c}`;
-                const item = map.get(k);
-                
+                const item = map.get(`${r},${c}`);
                 if(item) {
-                    // === [关键] 数据解构必须与 Python 顺序一致 ===
-                    // 0:r, 1:c, 2:Name, 3:Type, 4:Status, 5:Feature, 6:Short, 7:Vol, 8:Max, 9:Op...
-                    const [row, col, name, type, st, feat, short, v, vm] = item;
-                    
+                    // [NEW] 解构增加 wTxt (Index 13)
+                    const [row, col, name, type, st, feat, short, v, vm, op, dt, desc, res, wTxt] = item;
                     el.className = 'cell';
-                    // 背景色
                     el.style.backgroundColor = CL.st[st] || '#FFF';
                     
-                    // 圆环
                     let ring = '';
                     if(vm > 0) {
-                        let deg = (v/vm)*360;
-                        if(isNaN(deg)) deg = 0;
+                        let deg = (v/vm)*360; if(isNaN(deg)) deg=0;
                         let rc = (st===0 && (v/vm)<0.3) ? '#D93025' : '#333';
                         ring = `<div class="ring" style="background:conic-gradient(${rc} 0deg ${deg}deg, rgba(0,0,0,0.08) ${deg}deg 360deg)"></div>`;
-                    } else {
-                        ring = `<div class="ring" style="background:rgba(0,0,0,0.08)"></div>`;
-                    }
+                    } else { ring = `<div class="ring" style="background:rgba(0,0,0,0.08)"></div>`; }
                     
                     let color = (CL.types && CL.types[type]) ? CL.types[type] : '#888';
                     let txt = (short && short.trim()) ? short : name;
-                    let warn = (st===0 && vm>0 && (v/vm)<0.3) ? `<div class="warn">!</div>` : '';
+                    
+                    // [NEW] 警示标记逻辑：有警示文本 OR 低容量
+                    let warn = '';
+                    if (wTxt || (st===0 && vm>0 && (v/vm)<0.3)) {
+                        warn = `<div class="warn">!</div>`;
+                    }
                     
                     el.innerHTML = `${ring}${warn}<div class="core" style="background:${color}"><div class="t-main">${txt.substring(0,4)}</div>${feat?`<div class="t-sub">${feat.substring(0,5)}</div>`:''}</div>`;
                     el.onclick = () => showM(item, String.fromCharCode(65+r)+(c+1));
-                    el.dataset.txt = (name+short+type+feat).toLowerCase();
-                } else {
-                    el.className = 'cell empty';
-                }
+                    el.dataset.txt = (name+short+type+feat+(wTxt||"")).toLowerCase();
+                } else { el.className = 'cell empty'; }
                 grid.appendChild(el);
             }
         }
@@ -286,8 +265,7 @@
         const k = document.getElementById('search').value.toLowerCase().trim();
         DB.forEach(b => {
             const el = document.getElementById(`btn-${b.id}`);
-            const m = b.n.toLowerCase().includes(k);
-            el.style.display = (!k || m) ? 'flex' : 'none';
+            el.style.display = (!k || b.n.toLowerCase().includes(k)) ? 'flex' : 'none';
         });
         document.querySelectorAll('.cell').forEach(el => {
             if(el.classList.contains('empty')) return;
@@ -300,16 +278,22 @@
     }
 
     function showM(i, coord) {
-        // [r, c, name, type, st, feat, short, v, vm, op, dt, desc, res]
-        const [r, c, name, type, st, feat, short, v, vm, op, dt, desc, res] = i;
+        // [NEW] 解构增加 wTxt
+        const [r, c, name, type, st, feat, short, v, vm, op, dt, desc, res, wTxt] = i;
         document.getElementById('mCoord').textContent = coord;
         document.getElementById('mCoord').style.backgroundColor = (CL.types && CL.types[type]) ? CL.types[type] : '#888';
         document.getElementById('mName').textContent = name;
         document.getElementById('mType').textContent = type + (short?` (${short})`:'');
         
+        // [NEW] 显示警示信息块
+        const wBox = document.getElementById('mWarn');
+        if(wTxt) {
+            wBox.style.display = 'flex';
+            wBox.innerHTML = `<div class="warn-icon">⚠️</div><div><div style="font-weight:bold;margin-bottom:4px">${UI.warn_lbl || 'Warning'}</div>${wTxt}</div>`;
+        } else { wBox.style.display = 'none'; }
+
         const stEl = document.getElementById('mStatus');
         stEl.textContent = UI.st_txt[st];
-        // 状态文本颜色优化
         stEl.style.color = (st===0?'#2E7D32':(st===1?'#EF6C00':'#C62828'));
         
         document.getElementById('mOp').textContent = op||'-';
@@ -319,15 +303,10 @@
         const tags = document.getElementById('mTags'); tags.innerHTML = '';
         if(feat) tags.innerHTML += `<span class="tag" style="background:#E3F2FD;color:#1967D2">🧬 ${feat}</span>`;
         if(res) {
-            try {
-                if(res.startsWith('[')) JSON.parse(res).forEach(x=>tags.innerHTML+=`<span class="tag">💊 ${x.name}</span>`);
-                else tags.innerHTML+=`<span class="tag">💊 ${res}</span>`;
-            } catch(e){ if(res) tags.innerHTML+=`<span class="tag">💊 ${res}</span>`; }
+            try { if(res.startsWith('[')) JSON.parse(res).forEach(x=>tags.innerHTML+=`<span class="tag">💊 ${x.name}</span>`); else tags.innerHTML+=`<span class="tag">💊 ${res}</span>`; } catch(e){ if(res) tags.innerHTML+=`<span class="tag">💊 ${res}</span>`; }
         }
-        
         const dBox = document.getElementById('mDesc');
         if(desc) { dBox.style.display='block'; dBox.textContent=desc; } else dBox.style.display='none';
-        
         document.querySelector('.m-mask').classList.add('show');
         document.querySelector('.modal').classList.add('show');
     }
