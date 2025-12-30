@@ -8,83 +8,121 @@
         :root {
             --bg: #F2F4F7; --card: #FFF; --text: #333; --sub: #888;
             --primary: #007AFF; --border: #E5E5EA;
-            
-            /* === [修改] 格子加大到 100px === */
-            --cell-size: 100px; 
+            /* 增大格子尺寸 */
+            --cell-size: 72px; 
             --cell-gap: 10px;
-            --radius: 18px;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { margin: 0; padding: 0; height: 100vh; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; overflow: hidden; }
-        
+
         /* 侧边栏 */
-        .sidebar { width: 300px; background: #fff; display: flex; flex-direction: column; border-right: 1px solid #ddd; z-index: 20; flex-shrink: 0; transition: transform 0.3s; box-shadow: 2px 0 10px rgba(0,0,0,0.05); }
-        .search-area { padding: 20px; border-bottom: 1px solid #f0f0f0; }
-        .search-inp { width: 100%; padding: 12px 16px; border-radius: 12px; border: none; background: #F5F7FA; font-size: 15px; outline: none; color: var(--text); }
-        .box-list { flex: 1; overflow-y: auto; padding: 15px; }
-        .cat-title { font-size: 13px; font-weight: 700; color: #999; margin: 20px 0 8px 10px; text-transform: uppercase; }
-        .box-item { padding: 14px 16px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; }
+        .sidebar { width: 280px; background: #fff; display: flex; flex-direction: column; border-right: 1px solid #ddd; z-index: 20; flex-shrink: 0; transition: transform 0.3s; }
+        .search-area { padding: 15px; border-bottom: 1px solid #f0f0f0; }
+        .search-inp { width: 100%; padding: 10px 12px; border-radius: 8px; border: none; background: #F5F7FA; font-size: 14px; outline: none; }
+        
+        .box-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .cat-title { font-size: 12px; font-weight: bold; color: #999; margin: 15px 0 5px 8px; text-transform: uppercase; }
+        .box-item { padding: 12px; border-radius: 10px; margin-bottom: 5px; cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; }
         .box-item:hover { background: #F5F7FA; }
-        .box-item.active { background: #E3F2FD; color: var(--primary); border-color: #BBDEFB; font-weight: 600; }
-        .b-name { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
-        .b-info { font-size: 13px; opacity: 0.7; }
+        .box-item.active { background: #E3F2FD; color: var(--primary); font-weight: 600; border-color: #BBDEFB; }
+        .b-name { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
         
         /* 图例区域 */
-        .legend-area { padding: 15px 20px; background: #FAFAFA; border-top: 1px solid #EEE; max-height: 200px; overflow-y: auto; }
-        .legend-title { font-size: 12px; font-weight: bold; color: #AAA; margin-bottom: 10px; }
-        .legend-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-        .legend-item { display: flex; align-items: center; font-size: 12px; color: #666; width: 45%; }
-        .l-dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; flex-shrink: 0; }
+        .legend { padding: 15px; background: #FAFAFA; border-top: 1px solid #EEE; max-height: 200px; overflow-y: auto; }
+        .leg-t { font-size: 12px; font-weight: bold; color: #AAA; margin-bottom: 8px; }
+        .leg-g { display: flex; flex-wrap: wrap; gap: 8px; }
+        .leg-i { display: flex; align-items: center; font-size: 12px; color: #666; width: 48%; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
 
-        /* 主区域 */
-        .main { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; }
-        .header { padding: 20px 30px; background: #fff; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.02); z-index: 10; }
-        .h-title { font-size: 24px; font-weight: 800; color: #111; }
-        .h-sub { font-size: 14px; color: var(--sub); margin-top: 4px; }
-        .menu-btn { display: none; font-size: 24px; cursor: pointer; margin-right: 20px; }
+        /* 主界面 */
+        .main { flex: 1; display: flex; flex-direction: column; width: 100%; position: relative; }
+        .header { padding: 15px 25px; background: #fff; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); z-index: 10; }
+        .h-title { font-size: 20px; font-weight: 800; color: #222; }
+        .h-sub { font-size: 13px; color: var(--sub); margin-top: 2px; }
+        .menu-btn { display: none; font-size: 22px; cursor: pointer; margin-right: 15px; }
 
-        /* 网格 */
-        .grid-view { flex: 1; overflow: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; background-color: #F2F4F7; cursor: grab; position: relative; }
+        /* 网格视图 - 支持拖拽 */
+        .grid-view { flex: 1; overflow: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; background: #F2F4F7; cursor: grab; position: relative; }
         .grid-view.active { cursor: grabbing; }
-        .grid { display: grid; gap: var(--cell-gap); padding: 20px; background: #fff; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); margin-bottom: 80px; }
         
-        .cell { 
-            width: var(--cell-size); height: var(--cell-size); 
-            border-radius: var(--radius); background: #FFF; border: 2px solid #F0F0F0; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            font-size: 15px; font-weight: 700; color: #fff; 
-            position: relative; cursor: pointer; transition: transform 0.1s; overflow: hidden; 
-            text-align: center; line-height: 1.2; padding: 6px; 
+        .grid { 
+            display: grid; gap: var(--cell-gap); padding: 20px; 
+            background: #fff; border-radius: 20px; 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+            margin-bottom: 80px; 
         }
-        .cell.filled { border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
-        .cell:active { transform: scale(0.95); }
-        .cell.empty { background: #FAFAFA; border: 2px dashed #E0E0E0; color: transparent; pointer-events: none; }
-        .cell-sub { font-size: 11px; opacity: 0.9; font-weight: normal; margin-top: 4px; display: block; }
-        .cell.dim { opacity: 0.15; filter: grayscale(100%); }
-        .cell.hi { transform: scale(1.1); z-index: 20; box-shadow: 0 0 0 4px #FFD60A, 0 15px 30px rgba(0,0,0,0.3); }
 
-        /* 状态点 */
-        .st-dot { position: absolute; top: 8px; right: 8px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #FFF; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        /* === [核心] 细胞样式：复刻软件绘制逻辑 === */
+        .cell {
+            width: var(--cell-size); height: var(--cell-size);
+            border-radius: 12px; 
+            background: #FFF; /* 默认白底 */
+            border: 1px solid #EEE;
+            position: relative; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.1s;
+        }
+        .cell:active { transform: scale(0.95); }
+        .cell.empty { border: 1px dashed #DDD; background: #FAFAFA; pointer-events: none; }
+        
+        /* 状态背景色 (取出/报废时整个方块变色) */
+        .cell.st-out { background-color: rgba(255, 149, 0, 0.15) !important; border-color: #FFDCA8; }
+        .cell.st-bad { background-color: rgba(95, 99, 104, 0.15) !important; border-color: #CCC; }
+
+        /* 体积圆环 (使用 conic-gradient 模拟 drawArc) */
+        .vol-ring {
+            position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px;
+            border-radius: 50%;
+            /* 默认灰色轨道 */
+            background: conic-gradient(#E0E0E0 0% 100%); 
+            mask: radial-gradient(transparent 64%, black 65%);
+            -webkit-mask: radial-gradient(transparent 64%, black 65%);
+            z-index: 1;
+        }
+        
+        /* 中心实心圆 (Type Color) */
+        .core {
+            position: absolute; top: 9px; left: 9px; right: 9px; bottom: 9px;
+            border-radius: 50%;
+            background-color: #888; /* 动态改变 */
+            z-index: 2;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            color: #FFF; line-height: 1.1;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .txt-main { font-size: 13px; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .txt-sub { font-size: 9px; opacity: 0.9; font-weight: normal; margin-top: 1px; }
+
+        /* 搜索高亮 */
+        .cell.dim { opacity: 0.1; filter: grayscale(100%); }
+        .cell.hi { transform: scale(1.1); z-index: 10; box-shadow: 0 0 0 4px #007AFF; border-radius: 14px; }
 
         /* 移动端 */
         @media (max-width: 768px) {
-            .sidebar { position: absolute; height: 100%; transform: translateX(-100%); width: 85%; }
+            .sidebar { position: absolute; height: 100%; transform: translateX(-100%); width: 85%; box-shadow: 5px 0 20px rgba(0,0,0,0.1); }
             .sidebar.open { transform: translateX(0); }
             .menu-btn { display: block; }
             .overlay { display: none; position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 15; }
             .overlay.show { display: block; }
             .grid-view { padding: 20px; }
-            :root { --cell-size: 70px; --cell-gap: 8px; }
+            :root { --cell-size: 64px; --cell-gap: 8px; }
         }
 
         /* 弹窗 */
-        .modal { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; border-radius: 24px 24px 0 0; padding: 30px 24px; z-index: 100; transform: translateY(100%); transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.15); }
-        .modal.show { transform: translateY(0); }
         .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 99; display: none; }
         .m-mask.show { display: block; }
-        .tag { background: #F0F2F5; padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #444; }
-        .row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #F5F5F5; font-size: 15px; }
-        .loading { position: fixed; inset:0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f0f2f5; z-index: 200; color: #888; }
+        .modal { 
+            position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; 
+            border-radius: 20px 20px 0 0; padding: 25px; z-index: 100;
+            transform: translateY(100%); transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .modal.show { transform: translateY(0); }
+        
+        .tag { background: #F0F2F5; padding: 3px 8px; border-radius: 6px; font-size: 12px; margin-right: 5px; }
+        .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #F9F9F9; font-size: 14px; }
+        .loading { position: fixed; inset:0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #F0F2F5; z-index: 200; color: #999; }
     </style>
 </head>
 <body>
@@ -98,13 +136,10 @@
 
 <div class="sidebar" id="sidebar">
     <div class="search-area">
-        <input type="text" class="search-inp" id="globalSearch" placeholder="🔍 ...">
+        <input type="text" class="search-inp" id="search" placeholder="Search...">
     </div>
     <div class="box-list" id="boxList"></div>
-    <div class="legend-area">
-        <div class="legend-title" id="legTitle">LEGEND</div>
-        <div class="legend-grid" id="legendGrid"></div>
-    </div>
+    <div class="legend" id="legend"></div>
 </div>
 
 <div class="main">
@@ -124,30 +159,24 @@
 
 <div class="m-mask" onclick="closeM()"></div>
 <div class="modal" id="modal">
-    <div style="display:flex; justify-content:space-between; margin-bottom:20px; align-items:center;">
-        <span id="mCoord" style="background:#007AFF;color:#fff;padding:6px 12px;border-radius:10px;font-weight:800;font-size:16px;">-</span>
-        <span onclick="closeM()" style="font-size:28px;color:#CCC;cursor:pointer;line-height:1;">&times;</span>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <span id="mCoord" style="background:#007AFF;color:#fff;padding:4px 10px;border-radius:8px;font-weight:bold">-</span>
+        <span onclick="closeM()" style="font-size:24px;color:#CCC;cursor:pointer">&times;</span>
     </div>
-    <h3 id="mName" style="margin:0 0 6px 0; font-size:22px; color:#111;">-</h3>
-    <div id="mType" style="color:#888; font-size:14px; font-weight:500; margin-bottom:20px;">-</div>
-    <div class="row"><span id="lblSt" style="color:#888">Status</span><span id="mStatus" style="font-weight:600">-</span></div>
-    <div class="row"><span id="lblOp" style="color:#888">Op</span><span id="mOp" style="font-weight:600">-</span></div>
-    <div class="row"><span id="lblDate" style="color:#888">Date</span><span id="mDate" style="font-weight:600">-</span></div>
-    <div class="row"><span id="lblVol" style="color:#888">Vol</span><span id="mVol" style="font-weight:600">-</span></div>
-    <div id="mTags" style="margin-top:20px; display:flex; gap:8px; flex-wrap:wrap"></div>
-    <div id="mDesc" style="margin-top:20px; background:#F9FAFB; padding:15px; border-radius:12px; font-size:14px; color:#555; line-height:1.5; display:none; border:1px solid #EEE;"></div>
+    <h3 id="mName" style="margin:0 0 5px 0; font-size:18px">-</h3>
+    <div id="mType" style="color:#888; font-size:13px; margin-bottom:15px">-</div>
+    <div class="row"><span id="l_st" style="color:#888">St</span><span id="mStatus" style="font-weight:600">-</span></div>
+    <div class="row"><span id="l_op" style="color:#888">Op</span><span id="mOp" style="font-weight:600">-</span></div>
+    <div class="row"><span id="l_date" style="color:#888">Dt</span><span id="mDate" style="font-weight:600">-</span></div>
+    <div class="row"><span id="l_vol" style="color:#888">Vo</span><span id="mVol" style="font-weight:600">-</span></div>
+    <div id="mTags" style="margin-top:15px; display:flex; flex-wrap:wrap; gap:5px"></div>
+    <div id="mDesc" style="margin-top:15px; background:#F9FAFB; padding:10px; border-radius:8px; font-size:13px; color:#555; display:none"></div>
 </div>
 
 <script>
-    // 默认配置 (会被 URL 数据覆盖)
-    let UI = { 
-        title_sel: "Select Box", search: "Search...", legend: "LEGEND", 
-        st_0: "In Stock", st_1: "Removed", st_2: "Discarded",
-        status: "Status", op: "Operator", date: "Date", vol: "Volume"
-    };
-    let COLORS = { "DNA": "#1967D2", "Other": "#5F6368" };
-    let STATUS_COLORS = { "0": "#34C759", "1": "#FF9500", "2": "#FF3B30" };
-    
+    let DATA = {};
+    let UI = {};
+    let COLS = {};
     let DB = [];
     let curBox = null;
 
@@ -164,58 +193,52 @@
             const hash = window.location.hash.substring(1);
             if(!hash) throw "No Data";
             
-            const binaryString = atob(hash.replace(/-/g, '+').replace(/_/g, '/'));
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+            const bin = atob(hash.replace(/-/g, '+').replace(/_/g, '/'));
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
 
             let jsonStr;
             try {
                 const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
                 const resp = await new Response(stream).blob();
                 jsonStr = await resp.text();
-            } catch(e) {
+            } catch {
                 jsonStr = decodeURIComponent(escape(atob(hash)));
             }
 
-            const data = JSON.parse(jsonStr);
+            DATA = JSON.parse(jsonStr);
             
-            // === 数据加载与配置同步 ===
-            if (data.v === 3 && data.c) {
-                DB = data.b;
-                if(data.c.ui) UI = data.c.ui;       // 同步语言
-                if(data.c.types) COLORS = data.c.types; // 同步类型颜色
-                if(data.c.sts) STATUS_COLORS = data.c.sts; // 同步状态颜色
-            } else if (data.v === 2) {
-                DB = data.b;
-                if(data.t) COLORS = data.t;
-            } else if (data.boxes) {
-                DB = data.boxes;
-                if(data.types) COLORS = data.types;
+            // 数据解析
+            if(DATA.v === 4) {
+                DB = DATA.db;
+                UI = DATA.ui;
+                COLS = DATA.cl;
+                applyUI();
             } else {
-                DB = Array.isArray(data) ? data : [data];
+                // 兼容旧版
+                DB = Array.isArray(DATA) ? DATA : (DATA.boxes || [DATA]);
+                UI = { select_box: "Box", meta_fmt: "{s} • {c}", f_name:"Name", f_type:"Type", f_status:"Status", f_op:"Op", f_date:"Date", f_vol:"Vol", st:{0:"In",1:"Out",2:"Bad"}, legend:"LEGEND" };
+                COLS = { types: {"DNA":"#1967D2","Other":"#666"}, status: {in:"#34C759", out:"#FF9500", bad:"#FF3B30"} };
             }
             
-            applyConfig();
-            initUI();
+            init();
         } catch(e) {
-            console.error(e);
-            document.getElementById('loading').innerHTML = '<div style="text-align:center">⚠️ Error<br><small>Update Software</small></div>';
+            document.getElementById('loading').innerHTML = "⚠️ Error";
         }
     };
 
-    function applyConfig() {
-        // 应用 UI 文本
-        document.getElementById('globalSearch').placeholder = "🔍 " + UI.search;
-        document.getElementById('legTitle').textContent = UI.legend;
-        document.getElementById('vTitle').textContent = UI.title_sel;
-        // 应用弹窗标签
-        document.getElementById('lblSt').textContent = UI.status;
-        document.getElementById('lblOp').textContent = UI.op;
-        document.getElementById('lblDate').textContent = UI.date;
-        document.getElementById('lblVol').textContent = UI.vol;
+    function applyUI() {
+        document.getElementById('search').placeholder = "🔍 " + UI.search;
+        document.getElementById('vTitle').textContent = UI.select_box;
+        document.querySelector('.leg-t').textContent = UI.legend;
+        // 弹窗标签
+        document.getElementById('l_st').textContent = UI.f_status;
+        document.getElementById('l_op').textContent = UI.f_op;
+        document.getElementById('l_date').textContent = UI.f_date;
+        document.getElementById('l_vol').textContent = UI.f_vol;
     }
 
-    function initUI() {
+    function init() {
         document.getElementById('loading').style.display = 'none';
         renderSidebar();
         renderLegend();
@@ -223,29 +246,33 @@
     }
 
     function renderLegend() {
-        const grid = document.getElementById('legendGrid');
-        grid.innerHTML = '';
-        // 渲染类型
-        for(let [type, color] of Object.entries(COLORS)) {
-            grid.innerHTML += `<div class="legend-item"><div class="l-dot" style="background:${color}"></div>${type}</div>`;
+        const leg = document.getElementById('legend');
+        leg.innerHTML = `<div class="leg-t">${UI.legend}</div><div class="leg-g" id="legGrid"></div>`;
+        const g = document.getElementById('legGrid');
+        
+        // 状态图例
+        g.innerHTML += `<div class="leg-i"><div class="dot" style="background:${COLS.status.in}"></div>${UI.st[0]}</div>`;
+        g.innerHTML += `<div class="leg-i"><div class="dot" style="background:${COLS.status.out}"></div>${UI.st[1]}</div>`;
+        g.innerHTML += `<div class="leg-i"><div class="dot" style="background:${COLS.status.bad}"></div>${UI.st[2]}</div>`;
+        
+        // 类型图例
+        for(let [k,v] of Object.entries(COLS.types)) {
+            g.innerHTML += `<div class="leg-i"><div class="dot" style="background:${v}"></div>${k}</div>`;
         }
-        // 渲染状态 (使用同步过来的颜色和文本)
-        grid.innerHTML += `<div class="legend-item"><div class="l-dot" style="background:${STATUS_COLORS["1"]}"></div>${UI.st_1}</div>`;
-        grid.innerHTML += `<div class="legend-item"><div class="l-dot" style="background:${STATUS_COLORS["2"]}"></div>${UI.st_2}</div>`;
     }
 
     function renderSidebar() {
-        const list = document.getElementById('boxList');
-        list.innerHTML = '';
-        let lastCat = null;
+        const lst = document.getElementById('boxList');
+        lst.innerHTML = '';
+        let lastC = null;
         DB.forEach(b => {
-            if(b.c !== lastCat) { list.innerHTML += `<div class="cat-title">📂 ${b.c}</div>`; lastCat = b.c; }
+            if(b.c !== lastC) { lst.innerHTML += `<div class="cat-title">📂 ${b.c}</div>`; lastC = b.c; }
             const el = document.createElement('div');
             el.className = 'box-item';
             el.id = `btn-${b.id}`;
-            el.innerHTML = `<span class="b-name">📦 ${b.n}</span><span class="b-info">${b.p}%</span>`;
+            el.innerHTML = `<div class="b-name">📦 ${b.n}</div><div class="b-info">${b.p}%</div>`;
             el.onclick = () => { loadBox(b.id); if(window.innerWidth<768) toggleMenu(); };
-            list.appendChild(el);
+            lst.appendChild(el);
         });
     }
 
@@ -255,7 +282,7 @@
         document.querySelectorAll('.box-item').forEach(e => e.classList.remove('active'));
         document.getElementById(`btn-${bid}`).classList.add('active');
         document.getElementById('vTitle').textContent = curBox.n;
-        document.getElementById('vMeta').textContent = `${curBox.s} • ${curBox.d.length} Items`;
+        document.getElementById('vMeta').textContent = UI.meta_fmt.replace("{s}", curBox.s).replace("{c}", curBox.d.length);
 
         const [R, C] = curBox.s.split('x').map(Number);
         const grid = document.getElementById('grid');
@@ -270,72 +297,97 @@
                 const el = document.createElement('div');
                 const item = map.get(`${r},${c}`);
                 const coord = String.fromCharCode(65+r) + (c+1);
+                
                 if(item) {
-                    // item: [r, c, name, type, st, feat, res, op, date, desc, vol, max, short]
-                    const [row, col, name, type, st, feat, res, op, date, desc, vol, maxVol, short] = item;
+                    // [r, c, name, type, st, feat, res, op, date, desc, vol, max, short]
+                    const [row, col, name, type, st, feat, res, op, date, desc, vol, max, short] = item;
+                    
                     el.className = 'cell filled';
-                    el.style.backgroundColor = COLORS[type] || '#888';
+                    // 状态背景色
+                    if(st === 1) el.classList.add('st-out');
+                    if(st === 2) el.classList.add('st-bad');
                     
-                    // 显示逻辑：优先简写，若无简写显示名字
-                    // 大尺寸格子可以显示两行：第一行名字，第二行 Feature
-                    const mainTxt = (short && short.trim()) ? short : name;
+                    // 1. 绘制体积圆环 (Conic Gradient)
+                    let deg = 0;
+                    if(max > 0) deg = (vol / max) * 360;
+                    const ringColor = (st === 0 && max > 0 && (vol/max)<0.3) ? '#D93025' : '#333'; // 低容量变红
+                    const trackColor = 'rgba(0,0,0,0.1)';
                     
-                    let html = `<div style="font-size:15px">${mainTxt.substring(0,5)}</div>`;
-                    if(feat) html += `<span class="cell-sub">${feat}</span>`;
+                    const ringHTML = `
+                        <div class="vol-ring" style="background: conic-gradient(${ringColor} ${deg}deg, ${trackColor} 0deg)"></div>
+                    `;
                     
-                    el.innerHTML = html;
-
-                    if(st===1) el.innerHTML += `<div class="st-dot" style="background:${STATUS_COLORS["1"]}"></div>`;
-                    if(st===2) el.innerHTML += `<div class="st-dot" style="background:${STATUS_COLORS["2"]}"></div>`;
+                    // 2. 绘制中心圆 (Type Color)
+                    const color = COLS.types[type] || '#888';
+                    const disp = (short && short.trim()) ? short : name;
+                    const sub = feat ? feat : "";
                     
+                    const coreHTML = `
+                        <div class="core" style="background-color:${color}">
+                            <div class="txt-main">${disp.substring(0,4)}</div>
+                            ${sub ? `<div class="txt-sub">${sub.substring(0,5)}</div>` : ''}
+                        </div>
+                    `;
+                    
+                    el.innerHTML = ringHTML + coreHTML;
                     el.onclick = (e) => showM(item, coord);
                     el.dataset.txt = [name, short, type, feat, res, coord].join(' ').toLowerCase();
-                } else { el.className = 'cell empty'; }
+                } else {
+                    el.className = 'cell empty';
+                }
                 grid.appendChild(el);
             }
         }
         doSearch();
     }
 
-    document.getElementById('globalSearch').addEventListener('input', doSearch);
+    document.getElementById('search').addEventListener('input', doSearch);
     function doSearch() {
-        const k = document.getElementById('globalSearch').value.toLowerCase().trim();
+        const k = document.getElementById('search').value.toLowerCase().trim();
         DB.forEach(b => {
             const btn = document.getElementById(`btn-${b.id}`);
-            const match = b.n.toLowerCase().includes(k) || b.d.some(d => (d[2]+(d[12]||'')).toLowerCase().includes(k));
-            btn.style.display = (!k || match) ? 'flex' : 'none';
+            const m = b.n.toLowerCase().includes(k) || b.d.some(d => (d[2]+(d[12]||'')).toLowerCase().includes(k));
+            btn.style.display = (!k || m) ? 'flex' : 'none';
         });
         document.querySelectorAll('.cell.filled').forEach(el => {
-            if(!k) { el.style.opacity='1'; el.style.transform='scale(1)'; el.style.boxShadow='none'; }
+            if(!k) { el.classList.remove('dim','hi'); }
             else {
-                if(el.dataset.txt.includes(k)) { el.style.opacity='1'; el.style.transform='scale(1.1)'; el.style.zIndex='10'; el.style.boxShadow='0 0 0 3px #FFD60A'; }
-                else { el.style.opacity='0.15'; el.style.transform='scale(1)'; el.style.zIndex='1'; el.style.boxShadow='none'; }
+                if(el.dataset.txt.includes(k)) { el.classList.add('hi'); el.classList.remove('dim'); }
+                else { el.classList.add('dim'); el.classList.remove('hi'); }
             }
         });
     }
 
     function showM(i, coord) {
-        const [row, col, name, type, st, feat, res, op, date, desc, vol, maxVol, short] = i;
+        const [row, col, name, type, st, feat, res, op, date, desc, vol, max, short] = i;
+        const color = COLS.types[type] || '#888';
+        
         document.getElementById('mCoord').textContent = coord;
-        document.getElementById('mCoord').style.backgroundColor = COLORS[type] || '#888';
+        document.getElementById('mCoord').style.backgroundColor = color;
         document.getElementById('mName').textContent = name;
         document.getElementById('mType').textContent = type + (short ? ` (${short})` : '');
         
-        // 状态文本
-        const statusMap = {0: UI.st_0, 1: UI.st_1, 2: UI.st_2};
-        document.getElementById('mStatus').textContent = statusMap[st] || '-';
-        document.getElementById('mStatus').style.color = STATUS_COLORS[st] || '#333';
+        document.getElementById('mStatus').textContent = UI.st[st];
+        // 状态颜色
+        let sc = COLS.status.in;
+        if(st===1) sc = COLS.status.out;
+        if(st===2) sc = COLS.status.bad;
+        document.getElementById('mStatus').style.color = sc;
         
         document.getElementById('mOp').textContent = op || '-';
         document.getElementById('mDate').textContent = date || '-';
+        
         let vTxt = '-';
-        if(maxVol > 0) vTxt = `${vol} / ${maxVol} μL`;
+        if(max > 0) vTxt = `${vol} / ${max} μL`;
         document.getElementById('mVol').textContent = vTxt;
-        const tagBox = document.getElementById('mTags'); tagBox.innerHTML = '';
-        if(feat) tagBox.innerHTML += `<span class="tag" style="background:#E3F2FD;color:#1967D2">🧬 ${feat}</span>`;
-        if(res) res.split(',').forEach(t => tagBox.innerHTML += `<span class="tag">💊 ${t}</span>`);
-        const dBox = document.getElementById('mDesc');
-        if(desc) { dBox.style.display='block'; dBox.textContent=desc; } else dBox.style.display='none';
+        
+        const tb = document.getElementById('mTags'); tb.innerHTML = '';
+        if(feat) tb.innerHTML += `<span class="tag" style="background:#E3F2FD;color:#1967D2">🧬 ${feat}</span>`;
+        if(res) res.split(',').forEach(t => tb.innerHTML += `<span class="tag">💊 ${t}</span>`);
+        
+        const db = document.getElementById('mDesc');
+        if(desc) { db.style.display='block'; db.textContent=desc; } else db.style.display='none';
+        
         document.querySelector('.m-mask').classList.add('show');
         document.querySelector('.modal').classList.add('show');
     }
