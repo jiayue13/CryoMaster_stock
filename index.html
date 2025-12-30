@@ -14,7 +14,6 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; display: flex; overflow: hidden; }
 
-        /* 左侧栏 */
         .sidebar { width: 320px; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; z-index: 20; flex-shrink: 0; transition: transform 0.3s; }
         .search-box { padding: 15px; border-bottom: 1px solid #eee; }
         .search-inp { width: 100%; padding: 10px 12px; border-radius: 8px; border: none; background: #F5F7FA; font-size: 14px; outline: none; }
@@ -26,38 +25,34 @@
         .b-n { font-size: 14px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 200px; }
         .b-p { font-size: 12px; opacity: 0.6; }
 
-        /* 图例 */
         .legend { padding: 15px 20px; background: #FAFAFA; border-top: 1px solid #EEE; min-height: 120px; max-height: 250px; overflow-y: auto; }
         .leg-title { font-size: 12px; font-weight: bold; color: #999; margin-bottom: 10px; }
         .leg-grid { display: flex; flex-wrap: wrap; gap: 10px; }
         .leg-item { display: flex; align-items: center; font-size: 12px; color: #555; width: 45%; }
         .dot, .dot-st { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
 
-        /* 主区域 */
         .main { flex: 1; display: flex; flex-direction: column; position: relative; }
         .header { padding: 15px 25px; background: #fff; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); z-index: 10; }
         .h-tit { font-size: 20px; font-weight: 800; color: #222; }
         .h-sub { font-size: 13px; color: #888; margin-top: 2px; }
         .menu-btn { display: none; font-size: 24px; margin-right: 15px; cursor: pointer; }
 
-        /* 网格画布 */
-        .grid-vp { flex: 1; overflow: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; cursor: grab; background: #F5F7FA; }
+        .grid-vp { flex: 1; overflow: auto; padding: 30px; display: flex; justify-content: center; align-items: flex-start; cursor: grab; background: #F5F7FA; }
         .grid-vp.active { cursor: grabbing; }
         
         /* 核心 Grid 容器 */
         .grid { 
             display: grid; 
-            /* gap 由 JS 动态控制 */
             padding: 20px; 
             background: #fff; border-radius: 20px; 
             box-shadow: 0 10px 40px rgba(0,0,0,0.08); 
             margin-bottom: 80px; 
         }
 
-        /* 坐标轴 */
+        /* 坐标轴样式 */
         .axis {
             display: flex; align-items: center; justify-content: center;
-            font-size: 12px; font-weight: 700; color: #999;
+            font-size: 14px; font-weight: 700; color: #AAA;
             user-select: none;
         }
 
@@ -65,6 +60,7 @@
         .cell { width: var(--cell-size); height: var(--cell-size); border-radius: 12px; background: #FFF; border: 1px solid #EAEAEA; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
         .cell:active { transform: scale(0.95); }
         .cell.empty { border: 1px dashed #DDD; background: #FAFAFA; pointer-events: none; }
+        
         .ring { position: absolute; inset: 4px; border-radius: 50%; z-index: 1; background: rgba(0,0,0,0.08); }
         .core { position: absolute; inset: 9px; border-radius: 50%; background: #888; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
         .t-main { font-size: 13px; font-weight: 800; text-shadow: 0 1px 1px rgba(0,0,0,0.2); max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 2px; }
@@ -83,10 +79,10 @@
             .overlay { display: none; position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 15; }
             .overlay.show { display: block; }
             .grid-vp { padding: 10px; }
-            :root { --cell-size: 60px; --gap: 6px; }
+            :root { --cell-size: 50px; --gap: 6px; }
+            .t-main { font-size: 11px; } .t-sub { display: none; } /* 手机上隐藏第二行文字 */
         }
 
-        /* 弹窗 */
         .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 99; display: none; backdrop-filter: blur(2px); }
         .m-mask.show { display: block; }
         .modal { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; border-radius: 20px 20px 0 0; padding: 25px; z-index: 100; transform: translateY(100%); transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 -10px 30px rgba(0,0,0,0.15); }
@@ -95,12 +91,10 @@
         .lbl { color: #888; } .val { font-weight: 600; color: #333; }
         .tag { background: #F0F2F5; padding: 3px 8px; border-radius: 6px; font-size: 12px; margin-right: 5px; color: #555; border: 1px solid #EEE; }
         
-        /* 警示信息块 */
         .warn-box { margin-top: 15px; background: #FFF5F5; padding: 12px; border-radius: 8px; font-size: 13px; color: var(--warn); border: 1px solid #FFCDD2; display: flex; align-items: flex-start; }
-        .warn-icon { margin-right: 8px; font-size: 16px; }
         
         .loading { position: fixed; inset:0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #F0F2F5; z-index: 200; color: #888; }
-        .err { color: var(--warn); background: #FFEBEE; padding: 10px; border-radius: 8px; margin-top: 20px; font-size: 12px; max-width: 80%; display: none; }
+        .err { color: var(--warn); background: #FFEBEE; padding: 10px; border-radius: 8px; margin-top: 20px; font-size: 12px; max-width: 80%; display: none; word-break: break-all;}
     </style>
 </head>
 <body>
@@ -137,9 +131,7 @@
     </div>
     <h3 id="mName" style="margin:0 0 5px 0; font-size:18px">-</h3>
     <div id="mType" style="color:#888; font-size:13px; margin-bottom:15px">-</div>
-    
     <div id="mWarn" class="warn-box" style="display:none"></div>
-    
     <div class="row"><span class="lbl" id="l_st">St</span><span class="val" id="mStatus">-</span></div>
     <div class="row"><span class="lbl" id="l_op">Op</span><span class="val" id="mOp">-</span></div>
     <div class="row"><span class="lbl" id="l_dt">Dt</span><span class="val" id="mDate">-</span></div>
@@ -157,16 +149,44 @@
     vp.addEventListener('mouseup', () => { isDown=false; vp.classList.remove('active'); });
     vp.addEventListener('mousemove', e => { if(!isDown)return; e.preventDefault(); const x=e.pageX-vp.offsetLeft; const y=e.pageY-vp.offsetTop; vp.scrollLeft=sL-(x-sX)*1.5; vp.scrollTop=sT-(y-sY)*1.5; });
 
-    window.onload = function() {
+    window.onload = async function() {
         try {
             const h = window.location.hash.substring(1);
             if(!h) throw "Empty URL";
+            
+            // 1. Base64 预处理
             let b64 = h.replace(/-/g, '+').replace(/_/g, '/');
             while(b64.length % 4) b64 += '=';
-            const jsonStr = decodeURIComponent(escape(atob(b64)));
-            DATA = JSON.parse(jsonStr);
             
-            if(DATA.v === 9) {
+            // 2. 解码为二进制
+            const bin = atob(b64);
+            const buf = new Uint8Array(bin.length);
+            for(let i=0; i<bin.length; i++) buf[i]=bin.charCodeAt(i);
+
+            let json;
+            // 3. 解压 (Decompress) -> 字符串
+            try {
+                if(window.fflate) {
+                    // 使用 fflate (如果加载成功)
+                    const dec = fflate.decompressSync(buf);
+                    json = new TextDecoder().decode(dec);
+                } else if ('DecompressionStream' in window) {
+                    // 使用原生 API (备选)
+                    const ds = new DecompressionStream('gzip');
+                    const w = new Blob([buf]).stream().pipeThrough(ds);
+                    json = await new Response(w).text();
+                } else {
+                    // 无法解压 (极少见)
+                    throw "Browser not supported";
+                }
+            } catch(e) {
+                // 如果解压失败，可能是旧版非压缩数据
+                json = decodeURIComponent(escape(atob(b64))); 
+            }
+
+            DATA = JSON.parse(json);
+            
+            if(DATA.v === 10) { // 版本校验
                 DB = DATA.d; UI = DATA.c.ui; CL = DATA.c.colors;
                 setupUI();
                 init();
@@ -174,7 +194,7 @@
                 throw "Version mismatch. Please update software.";
             }
         } catch(e) {
-            document.getElementById('lt').textContent = "⚠️ Load Failed";
+            document.getElementById('lt').textContent = "⚠️ Error";
             document.getElementById('err').style.display='block';
             document.getElementById('err').textContent = e.toString();
         }
@@ -235,8 +255,9 @@
         let R=9, C=9;
         try { [R, C] = curBox.s.split('x').map(Number); } catch(e){}
         
-        // === Grid 布局设置 (C+1 列, 30px 是坐标轴宽度) ===
+        // === Grid 布局 (带坐标轴) ===
         const grid = document.getElementById('grid');
+        // 第一列是 30px (行号)，其余是格子
         grid.style.gridTemplateColumns = `30px repeat(${C}, var(--cell-size))`;
         grid.style.gap = "var(--gap)";
         grid.innerHTML = '';
@@ -244,8 +265,8 @@
         const map = new Map();
         curBox.d.forEach(d => map.set(`${d[0]},${d[1]}`, d));
 
-        // 1. 顶部表头 (0,0为空)
-        grid.appendChild(createAxis(""));
+        // 1. 顶部表头 (0,0为空, 1~C)
+        grid.appendChild(createAxis("")); // 左上角空白
         for(let c=1; c<=C; c++) grid.appendChild(createAxis(c));
 
         // 2. 数据行
@@ -253,12 +274,11 @@
             // 左侧行号 (A, B, C...)
             grid.appendChild(createAxis(String.fromCharCode(65+r)));
 
-            // 实际数据格
+            // 实际格子
             for(let c=0; c<C; c++){
                 const el = document.createElement('div');
                 const item = map.get(`${r},${c}`);
                 if(item) {
-                    // 解构数据 (14项)
                     const [row, col, name, type, st, feat, short, v, vm, op, dt, desc, res, wTxt] = item;
                     el.className = 'cell';
                     el.style.backgroundColor = CL.st[st] || '#FFF';
@@ -273,7 +293,7 @@
                     let color = (CL.types && CL.types[type]) ? CL.types[type] : '#888';
                     let txt = (short && short.trim()) ? short : name;
                     
-                    // 警示标记 (Warning OR Low Vol)
+                    // 警示标记 (文字警告 或 低容量)
                     let warn = '';
                     if (wTxt || (st===0 && vm>0 && (v/vm)<0.3)) {
                         warn = `<div class="warn">!</div>`;
@@ -324,7 +344,7 @@
         const wBox = document.getElementById('mWarn');
         if(wTxt) {
             wBox.style.display = 'flex';
-            wBox.innerHTML = `<div class="warn-icon">⚠️</div><div><div style="font-weight:bold;margin-bottom:4px">${UI.warn_lbl || 'Warning'}</div>${wTxt}</div>`;
+            wBox.innerHTML = `<div style="margin-right:8px;font-size:16px">⚠️</div><div><div style="font-weight:bold;margin-bottom:4px">${UI.warn}</div>${wTxt}</div>`;
         } else { wBox.style.display = 'none'; }
 
         const stEl = document.getElementById('mStatus');
