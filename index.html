@@ -4,24 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CryoMaster View</title>
+    <script src="https://unpkg.com/fflate@0.8.0"></script>
     <style>
         :root {
             --bg: #F2F4F7; --card: #FFF; --text: #333; --sub: #888;
             --primary: #007AFF; --border: #E5E5EA;
-            
-            /* === 格子尺寸配置 === */
-            --cell-size: 72px; 
-            --cell-gap: 10px;
-            --radius: 12px;
+            --cell-size: 72px; --cell-gap: 10px; --radius: 12px;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { margin: 0; padding: 0; height: 100vh; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; overflow: hidden; }
 
-        /* === 侧边栏 === */
+        /* 侧边栏 */
         .sidebar { width: 280px; background: #fff; display: flex; flex-direction: column; border-right: 1px solid #ddd; z-index: 20; flex-shrink: 0; transition: transform 0.3s; }
         .search-area { padding: 15px; border-bottom: 1px solid #f0f0f0; }
         .search-inp { width: 100%; padding: 10px 12px; border-radius: 8px; border: none; background: #F5F7FA; font-size: 14px; outline: none; }
-        
         .box-list { flex: 1; overflow-y: auto; padding: 10px; }
         .cat-title { font-size: 12px; font-weight: bold; color: #999; margin: 15px 0 5px 8px; text-transform: uppercase; }
         .box-item { padding: 12px; border-radius: 10px; margin-bottom: 5px; cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; }
@@ -30,85 +26,42 @@
         .b-name { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
         .b-info { font-size: 12px; opacity: 0.7; }
         
-        /* === 动态图例区域 === */
+        /* 图例 */
         .legend { padding: 15px; background: #FAFAFA; border-top: 1px solid #EEE; max-height: 200px; overflow-y: auto; }
         .leg-t { font-size: 12px; font-weight: bold; color: #AAA; margin-bottom: 8px; }
         .leg-g { display: flex; flex-wrap: wrap; gap: 8px; }
         .leg-i { display: flex; align-items: center; font-size: 12px; color: #666; width: 45%; }
         .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
 
-        /* === 主界面 === */
+        /* 主界面 */
         .main { flex: 1; display: flex; flex-direction: column; width: 100%; position: relative; }
         .header { padding: 15px 25px; background: #fff; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); z-index: 10; }
         .h-title { font-size: 20px; font-weight: 800; color: #222; }
         .h-sub { font-size: 13px; color: var(--sub); margin-top: 2px; }
         .menu-btn { display: none; font-size: 22px; cursor: pointer; margin-right: 15px; }
 
-        /* === 网格视图 (支持拖拽) === */
+        /* 网格 */
         .grid-view { flex: 1; overflow: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; background: #F2F4F7; cursor: grab; position: relative; }
         .grid-view.active { cursor: grabbing; }
+        .grid { display: grid; gap: var(--cell-gap); padding: 20px; background: #fff; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); margin-bottom: 80px; }
         
-        .grid { 
-            display: grid; gap: var(--cell-gap); padding: 20px; 
-            background: #fff; border-radius: 20px; 
-            box-shadow: 0 8px 30px rgba(0,0,0,0.05);
-            margin-bottom: 80px; 
-        }
-
-        /* === [核心] 细胞样式：1:1 复刻软件绘制逻辑 === */
-        .cell {
-            width: var(--cell-size); height: var(--cell-size);
-            border-radius: 12px; 
-            background: #FFF; /* 默认白底 */
-            border: 1px solid #EEE;
-            position: relative; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: transform 0.1s;
-        }
+        /* 细胞样式 */
+        .cell { width: var(--cell-size); height: var(--cell-size); border-radius: 12px; background: #FFF; border: 1px solid #EEE; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
         .cell:active { transform: scale(0.95); }
         .cell.empty { border: 1px dashed #DDD; background: #FAFAFA; pointer-events: none; }
         
-        /* 状态背景色 (取出/报废时整个方块变色，颜色由 JS 动态注入) */
-        .cell.st-bg { border-color: transparent; }
+        /* 状态背景 */
+        .cell.st-out { background-color: rgba(255, 149, 0, 0.15) !important; border-color: #FFDCA8; }
+        .cell.st-bad { background-color: rgba(95, 99, 104, 0.15) !important; border-color: #CCC; }
 
-        /* 体积圆环 (模拟 QPainter.drawArc) */
-        /* 使用 conic-gradient + mask 实现空心圆环 */
-        .ring {
-            position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px;
-            border-radius: 50%;
-            z-index: 1;
-            /* 默认灰色轨道 */
-            background: conic-gradient(rgba(0,0,0,0.1) 0% 100%); 
-            /* 挖空中心 */
-            mask: radial-gradient(transparent 64%, black 65%);
-            -webkit-mask: radial-gradient(transparent 64%, black 65%);
-        }
-        
-        /* 中心实心圆 (Type Color) */
-        .core {
-            position: absolute; top: 9px; left: 9px; right: 9px; bottom: 9px;
-            border-radius: 50%;
-            background-color: #888; /* 动态改变 */
-            z-index: 2;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            color: #FFF; line-height: 1.1;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        
+        /* 圆环与核心 */
+        .ring { position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px; border-radius: 50%; z-index: 1; background: conic-gradient(rgba(0,0,0,0.1) 0% 100%); mask: radial-gradient(transparent 64%, black 65%); -webkit-mask: radial-gradient(transparent 64%, black 65%); }
+        .core { position: absolute; top: 9px; left: 9px; right: 9px; bottom: 9px; border-radius: 50%; background-color: #888; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #FFF; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .txt-main { font-size: 13px; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
         .txt-sub { font-size: 9px; opacity: 0.9; font-weight: normal; margin-top: 1px; }
+        .warn { position: absolute; top: 4px; right: 4px; width: 14px; height: 14px; border-radius: 50%; background: #D93025; color: #fff; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; z-index: 3; border: 2px solid #fff; }
 
-        /* 警告图标 (!) */
-        .warn {
-            position: absolute; top: 4px; right: 4px;
-            width: 14px; height: 14px; border-radius: 50%;
-            background: #D93025; color: #fff; font-size: 10px; font-weight: bold;
-            display: flex; align-items: center; justify-content: center;
-            z-index: 3; border: 2px solid #fff;
-        }
-
-        /* 搜索高亮 */
+        /* 高亮 */
         .cell.dim { opacity: 0.1; filter: grayscale(100%); }
         .cell.hi { transform: scale(1.1); z-index: 10; box-shadow: 0 0 0 4px #007AFF; border-radius: 14px; }
 
@@ -126,23 +79,22 @@
         /* 弹窗 */
         .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 99; display: none; }
         .m-mask.show { display: block; }
-        .modal { 
-            position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; 
-            border-radius: 20px 20px 0 0; padding: 25px; z-index: 100;
-            transform: translateY(100%); transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
+        .modal { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; border-radius: 20px 20px 0 0; padding: 25px; z-index: 100; transform: translateY(100%); transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .modal.show { transform: translateY(0); }
         
         .tag { background: #F0F2F5; padding: 3px 8px; border-radius: 6px; font-size: 12px; margin-right: 5px; }
         .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #F9F9F9; font-size: 14px; }
-        .loading { position: fixed; inset:0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #F0F2F5; z-index: 200; color: #999; }
+        
+        .loading { position: fixed; inset:0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #F0F2F5; z-index: 200; color: #555; text-align: center; padding: 20px;}
+        .err-box { color: #D93025; background: #FFF0F0; padding: 15px; border-radius: 12px; border: 1px solid #FFCDD2; max-width: 90%; word-break: break-all; }
     </style>
 </head>
 <body>
 
 <div id="loading" class="loading">
     <div style="font-size:32px; margin-bottom:10px">📦</div>
-    <div>Wait...</div>
+    <div id="loadText">Loading data...</div>
+    <div id="errDetail" class="err-box" style="display:none; margin-top:20px;"></div>
 </div>
 
 <div class="overlay" onclick="toggleMenu()"></div>
@@ -204,31 +156,53 @@
     window.onload = async function() {
         try {
             const hash = window.location.hash.substring(1);
-            if(!hash) throw "No Data";
+            if(!hash) throw new Error("No Data Found in URL");
             
-            const bin = atob(hash.replace(/-/g, '+').replace(/_/g, '/'));
-            const bytes = new Uint8Array(bin.length);
-            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            // 1. Base64 预处理 (修复填充)
+            let base64Str = hash.replace(/-/g, '+').replace(/_/g, '/');
+            const padding = base64Str.length % 4;
+            if (padding) base64Str += '='.repeat(4 - padding);
 
+            // 2. 解码为二进制
+            const binaryString = atob(base64Str);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+
+            // 3. 智能解压 (DecompressionStream -> fflate fallback -> Raw)
             let jsonStr;
             try {
-                const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-                const resp = await new Response(stream).blob();
-                jsonStr = await resp.text();
-            } catch {
-                jsonStr = decodeURIComponent(escape(atob(hash)));
+                // 优先尝试原生 API
+                if ('DecompressionStream' in window) {
+                    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+                    const resp = await new Response(stream).blob();
+                    jsonStr = await resp.text();
+                } else {
+                    throw new Error("No Native DS");
+                }
+            } catch(e) {
+                console.log("Native unzip failed, trying fflate...");
+                try {
+                    // 尝试 fflate (兼容性好)
+                    if (window.fflate) {
+                        const decompressed = fflate.decompressSync(bytes);
+                        jsonStr = new TextDecoder().decode(decompressed);
+                    } else {
+                        throw new Error("fflate lib missing");
+                    }
+                } catch(e2) {
+                    console.log("All unzip failed, trying raw decode...");
+                    // 最后尝试直接解码 (如果数据其实没压缩)
+                    jsonStr = decodeURIComponent(escape(atob(base64Str)));
+                }
             }
 
             DATA = JSON.parse(jsonStr);
             
             // 数据解析
             if(DATA.v === 4) {
-                DB = DATA.db;
-                UI = DATA.ui;
-                COLS = DATA.cl;
-                applyUI();
+                DB = DATA.db; UI = DATA.ui; COLS = DATA.cl; applyUI();
             } else {
-                // 兼容旧版
+                // 旧版兼容
                 DB = Array.isArray(DATA) ? DATA : (DATA.boxes || [DATA]);
                 UI = { title_sel: "Select Box", meta_fmt: "{s} • {c}", f_name:"Name", f_type:"Type", f_st:"Status", f_op:"Op", f_date:"Date", f_vol:"Vol", st_txt:{0:"In",1:"Out",2:"Bad"}, legend:"LEGEND" };
                 COLS = { types: {"DNA":"#1967D2","Other":"#666"}, status: {in:"#34C759", out:"#FF9500", bad:"#FF3B30"} };
@@ -236,7 +210,11 @@
             
             init();
         } catch(e) {
-            document.getElementById('loading').innerHTML = "⚠️ Error";
+            console.error(e);
+            document.getElementById('loadText').textContent = "⚠️ Error loading data";
+            const errDiv = document.getElementById('errDetail');
+            errDiv.style.display = 'block';
+            errDiv.innerHTML = `<b>Reason:</b> ${e.message}<br><br><small>If you are on an old browser, please update.</small>`;
         }
     };
 
@@ -244,7 +222,6 @@
         document.getElementById('search').placeholder = "🔍 " + UI.search;
         document.getElementById('vTitle').textContent = UI.title_sel;
         document.querySelector('.leg-t').textContent = UI.legend;
-        // 弹窗标签
         document.getElementById('l_st').textContent = UI.f_st;
         document.getElementById('l_op').textContent = UI.f_op;
         document.getElementById('l_date').textContent = UI.f_dt;
@@ -262,13 +239,9 @@
         const leg = document.getElementById('legend');
         leg.innerHTML = `<div class="leg-t">${UI.legend}</div><div class="leg-g" id="legGrid"></div>`;
         const g = document.getElementById('legGrid');
-        
-        // 状态图例 (与软件一致)
         g.innerHTML += `<div class="leg-i"><div class="dot" style="background:${COLS.status.in}"></div>${UI.st_txt[0]}</div>`;
         g.innerHTML += `<div class="leg-i"><div class="dot" style="background:${COLS.status.out}"></div>${UI.st_txt[1]}</div>`;
         g.innerHTML += `<div class="leg-i"><div class="dot" style="background:${COLS.status.bad}"></div>${UI.st_txt[2]}</div>`;
-        
-        // 类型图例
         for(let [k,v] of Object.entries(COLS.types)) {
             g.innerHTML += `<div class="leg-i"><div class="dot" style="background:${v}"></div>${k}</div>`;
         }
@@ -312,29 +285,21 @@
                 const coord = String.fromCharCode(65+r) + (c+1);
                 
                 if(item) {
-                    // [r, c, name, type, st, feat, res, op, date, desc, vol, max, short]
                     const [row, col, name, type, st, feat, res, op, date, desc, vol, max, short] = item;
-                    
                     el.className = 'cell filled';
+                    if(st === 1) { el.classList.add('st-out'); el.style.borderColor = COLS.status.out; }
+                    if(st === 2) { el.classList.add('st-bad'); el.style.borderColor = COLS.status.bad; }
                     
-                    // 1. 状态背景染色
-                    if(st === 1) { el.style.backgroundColor = COLS.status.out + "40"; el.style.borderColor = COLS.status.out; } // Removed: 浅色半透明
-                    if(st === 2) { el.style.backgroundColor = COLS.status.bad + "40"; el.style.borderColor = COLS.status.bad; } // Discarded
-                    
-                    // 2. 绘制体积圆环 (CSS Conic Gradient)
                     let deg = 0;
                     let ringHtml = '';
                     if(max > 0) {
                         deg = (vol / max) * 360;
-                        const ringColor = (st === 0 && max > 0 && (vol/max)<0.3) ? '#D93025' : '#222'; // 低容量变红，否则深黑
-                        // conic-gradient: 黑色进度 + 透明底色
+                        const ringColor = (st === 0 && max > 0 && (vol/max)<0.3) ? '#D93025' : '#222';
                         ringHtml = `<div class="ring" style="background: conic-gradient(${ringColor} 0deg ${deg}deg, rgba(0,0,0,0.1) ${deg}deg 360deg)"></div>`;
                     } else {
-                        // 无体积限制，画个淡淡的灰圈
                         ringHtml = `<div class="ring" style="background: rgba(0,0,0,0.1)"></div>`;
                     }
                     
-                    // 3. 绘制中心圆 (Type Color)
                     const color = COLS.types[type] || '#888';
                     const disp = (short && short.trim()) ? short : name;
                     const sub = feat ? feat : "";
@@ -346,7 +311,6 @@
                         </div>
                     `;
                     
-                    // 4. 警告标
                     let warnHtml = '';
                     if(st === 0 && max > 0 && (vol/max)<0.3) warnHtml = `<div class="warn">!</div>`;
 
@@ -388,7 +352,6 @@
         document.getElementById('mName').textContent = name;
         document.getElementById('mType').textContent = type + (short ? ` (${short})` : '');
         
-        // 状态文本
         document.getElementById('mStatus').textContent = UI.st_txt[st];
         let sc = COLS.status.in;
         if(st===1) sc = COLS.status.out;
