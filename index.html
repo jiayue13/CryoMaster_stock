@@ -8,14 +8,16 @@
         :root {
             --bg: #F2F4F7; --card: #FFF; --text: #333; --sub: #888;
             --primary: #007AFF; --border: #E5E5EA;
-            /* 增大格子尺寸 */
+            
+            /* === 格子尺寸配置 === */
             --cell-size: 72px; 
             --cell-gap: 10px;
+            --radius: 12px;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { margin: 0; padding: 0; height: 100vh; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; overflow: hidden; }
 
-        /* 侧边栏 */
+        /* === 侧边栏 === */
         .sidebar { width: 280px; background: #fff; display: flex; flex-direction: column; border-right: 1px solid #ddd; z-index: 20; flex-shrink: 0; transition: transform 0.3s; }
         .search-area { padding: 15px; border-bottom: 1px solid #f0f0f0; }
         .search-inp { width: 100%; padding: 10px 12px; border-radius: 8px; border: none; background: #F5F7FA; font-size: 14px; outline: none; }
@@ -26,22 +28,23 @@
         .box-item:hover { background: #F5F7FA; }
         .box-item.active { background: #E3F2FD; color: var(--primary); font-weight: 600; border-color: #BBDEFB; }
         .b-name { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
+        .b-info { font-size: 12px; opacity: 0.7; }
         
-        /* 图例区域 */
+        /* === 动态图例区域 === */
         .legend { padding: 15px; background: #FAFAFA; border-top: 1px solid #EEE; max-height: 200px; overflow-y: auto; }
         .leg-t { font-size: 12px; font-weight: bold; color: #AAA; margin-bottom: 8px; }
         .leg-g { display: flex; flex-wrap: wrap; gap: 8px; }
-        .leg-i { display: flex; align-items: center; font-size: 12px; color: #666; width: 48%; }
+        .leg-i { display: flex; align-items: center; font-size: 12px; color: #666; width: 45%; }
         .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
 
-        /* 主界面 */
+        /* === 主界面 === */
         .main { flex: 1; display: flex; flex-direction: column; width: 100%; position: relative; }
         .header { padding: 15px 25px; background: #fff; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); z-index: 10; }
         .h-title { font-size: 20px; font-weight: 800; color: #222; }
         .h-sub { font-size: 13px; color: var(--sub); margin-top: 2px; }
         .menu-btn { display: none; font-size: 22px; cursor: pointer; margin-right: 15px; }
 
-        /* 网格视图 - 支持拖拽 */
+        /* === 网格视图 (支持拖拽) === */
         .grid-view { flex: 1; overflow: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; background: #F2F4F7; cursor: grab; position: relative; }
         .grid-view.active { cursor: grabbing; }
         
@@ -52,7 +55,7 @@
             margin-bottom: 80px; 
         }
 
-        /* === [核心] 细胞样式：复刻软件绘制逻辑 === */
+        /* === [核心] 细胞样式：1:1 复刻软件绘制逻辑 === */
         .cell {
             width: var(--cell-size); height: var(--cell-size);
             border-radius: 12px; 
@@ -65,19 +68,20 @@
         .cell:active { transform: scale(0.95); }
         .cell.empty { border: 1px dashed #DDD; background: #FAFAFA; pointer-events: none; }
         
-        /* 状态背景色 (取出/报废时整个方块变色) */
-        .cell.st-out { background-color: rgba(255, 149, 0, 0.15) !important; border-color: #FFDCA8; }
-        .cell.st-bad { background-color: rgba(95, 99, 104, 0.15) !important; border-color: #CCC; }
+        /* 状态背景色 (取出/报废时整个方块变色，颜色由 JS 动态注入) */
+        .cell.st-bg { border-color: transparent; }
 
-        /* 体积圆环 (使用 conic-gradient 模拟 drawArc) */
-        .vol-ring {
+        /* 体积圆环 (模拟 QPainter.drawArc) */
+        /* 使用 conic-gradient + mask 实现空心圆环 */
+        .ring {
             position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px;
             border-radius: 50%;
+            z-index: 1;
             /* 默认灰色轨道 */
-            background: conic-gradient(#E0E0E0 0% 100%); 
+            background: conic-gradient(rgba(0,0,0,0.1) 0% 100%); 
+            /* 挖空中心 */
             mask: radial-gradient(transparent 64%, black 65%);
             -webkit-mask: radial-gradient(transparent 64%, black 65%);
-            z-index: 1;
         }
         
         /* 中心实心圆 (Type Color) */
@@ -94,6 +98,15 @@
         
         .txt-main { font-size: 13px; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
         .txt-sub { font-size: 9px; opacity: 0.9; font-weight: normal; margin-top: 1px; }
+
+        /* 警告图标 (!) */
+        .warn {
+            position: absolute; top: 4px; right: 4px;
+            width: 14px; height: 14px; border-radius: 50%;
+            background: #D93025; color: #fff; font-size: 10px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 3; border: 2px solid #fff;
+        }
 
         /* 搜索高亮 */
         .cell.dim { opacity: 0.1; filter: grayscale(100%); }
@@ -217,7 +230,7 @@
             } else {
                 // 兼容旧版
                 DB = Array.isArray(DATA) ? DATA : (DATA.boxes || [DATA]);
-                UI = { select_box: "Box", meta_fmt: "{s} • {c}", f_name:"Name", f_type:"Type", f_status:"Status", f_op:"Op", f_date:"Date", f_vol:"Vol", st:{0:"In",1:"Out",2:"Bad"}, legend:"LEGEND" };
+                UI = { title_sel: "Select Box", meta_fmt: "{s} • {c}", f_name:"Name", f_type:"Type", f_st:"Status", f_op:"Op", f_date:"Date", f_vol:"Vol", st_txt:{0:"In",1:"Out",2:"Bad"}, legend:"LEGEND" };
                 COLS = { types: {"DNA":"#1967D2","Other":"#666"}, status: {in:"#34C759", out:"#FF9500", bad:"#FF3B30"} };
             }
             
@@ -229,12 +242,12 @@
 
     function applyUI() {
         document.getElementById('search').placeholder = "🔍 " + UI.search;
-        document.getElementById('vTitle').textContent = UI.select_box;
+        document.getElementById('vTitle').textContent = UI.title_sel;
         document.querySelector('.leg-t').textContent = UI.legend;
         // 弹窗标签
-        document.getElementById('l_st').textContent = UI.f_status;
+        document.getElementById('l_st').textContent = UI.f_st;
         document.getElementById('l_op').textContent = UI.f_op;
-        document.getElementById('l_date').textContent = UI.f_date;
+        document.getElementById('l_date').textContent = UI.f_dt;
         document.getElementById('l_vol').textContent = UI.f_vol;
     }
 
@@ -250,10 +263,10 @@
         leg.innerHTML = `<div class="leg-t">${UI.legend}</div><div class="leg-g" id="legGrid"></div>`;
         const g = document.getElementById('legGrid');
         
-        // 状态图例
-        g.innerHTML += `<div class="leg-i"><div class="dot" style="background:${COLS.status.in}"></div>${UI.st[0]}</div>`;
-        g.innerHTML += `<div class="leg-i"><div class="dot" style="background:${COLS.status.out}"></div>${UI.st[1]}</div>`;
-        g.innerHTML += `<div class="leg-i"><div class="dot" style="background:${COLS.status.bad}"></div>${UI.st[2]}</div>`;
+        // 状态图例 (与软件一致)
+        g.innerHTML += `<div class="leg-i"><div class="dot" style="background:${COLS.status.in}"></div>${UI.st_txt[0]}</div>`;
+        g.innerHTML += `<div class="leg-i"><div class="dot" style="background:${COLS.status.out}"></div>${UI.st_txt[1]}</div>`;
+        g.innerHTML += `<div class="leg-i"><div class="dot" style="background:${COLS.status.bad}"></div>${UI.st_txt[2]}</div>`;
         
         // 类型图例
         for(let [k,v] of Object.entries(COLS.types)) {
@@ -303,33 +316,41 @@
                     const [row, col, name, type, st, feat, res, op, date, desc, vol, max, short] = item;
                     
                     el.className = 'cell filled';
-                    // 状态背景色
-                    if(st === 1) el.classList.add('st-out');
-                    if(st === 2) el.classList.add('st-bad');
                     
-                    // 1. 绘制体积圆环 (Conic Gradient)
+                    // 1. 状态背景染色
+                    if(st === 1) { el.style.backgroundColor = COLS.status.out + "40"; el.style.borderColor = COLS.status.out; } // Removed: 浅色半透明
+                    if(st === 2) { el.style.backgroundColor = COLS.status.bad + "40"; el.style.borderColor = COLS.status.bad; } // Discarded
+                    
+                    // 2. 绘制体积圆环 (CSS Conic Gradient)
                     let deg = 0;
-                    if(max > 0) deg = (vol / max) * 360;
-                    const ringColor = (st === 0 && max > 0 && (vol/max)<0.3) ? '#D93025' : '#333'; // 低容量变红
-                    const trackColor = 'rgba(0,0,0,0.1)';
+                    let ringHtml = '';
+                    if(max > 0) {
+                        deg = (vol / max) * 360;
+                        const ringColor = (st === 0 && max > 0 && (vol/max)<0.3) ? '#D93025' : '#222'; // 低容量变红，否则深黑
+                        // conic-gradient: 黑色进度 + 透明底色
+                        ringHtml = `<div class="ring" style="background: conic-gradient(${ringColor} 0deg ${deg}deg, rgba(0,0,0,0.1) ${deg}deg 360deg)"></div>`;
+                    } else {
+                        // 无体积限制，画个淡淡的灰圈
+                        ringHtml = `<div class="ring" style="background: rgba(0,0,0,0.1)"></div>`;
+                    }
                     
-                    const ringHTML = `
-                        <div class="vol-ring" style="background: conic-gradient(${ringColor} ${deg}deg, ${trackColor} 0deg)"></div>
-                    `;
-                    
-                    // 2. 绘制中心圆 (Type Color)
+                    // 3. 绘制中心圆 (Type Color)
                     const color = COLS.types[type] || '#888';
                     const disp = (short && short.trim()) ? short : name;
                     const sub = feat ? feat : "";
                     
-                    const coreHTML = `
+                    const coreHtml = `
                         <div class="core" style="background-color:${color}">
                             <div class="txt-main">${disp.substring(0,4)}</div>
                             ${sub ? `<div class="txt-sub">${sub.substring(0,5)}</div>` : ''}
                         </div>
                     `;
                     
-                    el.innerHTML = ringHTML + coreHTML;
+                    // 4. 警告标
+                    let warnHtml = '';
+                    if(st === 0 && max > 0 && (vol/max)<0.3) warnHtml = `<div class="warn">!</div>`;
+
+                    el.innerHTML = ringHtml + coreHtml + warnHtml;
                     el.onclick = (e) => showM(item, coord);
                     el.dataset.txt = [name, short, type, feat, res, coord].join(' ').toLowerCase();
                 } else {
@@ -367,8 +388,8 @@
         document.getElementById('mName').textContent = name;
         document.getElementById('mType').textContent = type + (short ? ` (${short})` : '');
         
-        document.getElementById('mStatus').textContent = UI.st[st];
-        // 状态颜色
+        // 状态文本
+        document.getElementById('mStatus').textContent = UI.st_txt[st];
         let sc = COLS.status.in;
         if(st===1) sc = COLS.status.out;
         if(st===2) sc = COLS.status.bad;
