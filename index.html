@@ -6,112 +6,76 @@
     <title>CryoMaster Stock</title>
     <script src="https://unpkg.com/fflate@0.8.0"></script>
     <style>
-        :root {
-            --bg: #F5F7FA; --card: #FFF; --text: #333; --sub: #888;
-            --primary: #007AFF; --border: #E5E5EA;
-            /* 格子尺寸 */
-            --size: 100px; 
-            --gap: 12px;
-        }
+        :root { --bg: #F0F2F5; --text: #333; --primary: #007AFF; --size: 76px; --gap: 10px; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; display: flex; overflow: hidden; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; height: 100vh; display: flex; overflow: hidden; }
 
         .sidebar { width: 300px; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; z-index: 20; flex-shrink: 0; transition: transform 0.3s; }
         .search-box { padding: 15px; border-bottom: 1px solid #eee; }
         .search-inp { width: 100%; padding: 10px; border-radius: 8px; border: none; background: #F5F7FA; font-size: 14px; outline: none; }
         .list-wrap { flex: 1; overflow-y: auto; padding: 10px; }
         .cat-head { font-size: 12px; font-weight: bold; color: #aaa; margin: 15px 0 5px 10px; }
-        .box-row { padding: 12px; margin-bottom: 5px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; transition: 0.1s; }
+        .box-row { padding: 12px; margin-bottom: 5px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; }
         .box-row:hover { background: #F5F7FA; }
-        .box-row.active { background: #E3F2FD; color: var(--primary); border: 1px solid #BBDEFB; }
-        .b-n { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+        .box-row.active { background: #E3F2FD; color: var(--primary); font-weight: bold; }
+        .b-n { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
         .b-p { font-size: 12px; opacity: 0.7; }
 
-        .legend { padding: 15px; background: #FAFAFA; border-top: 1px solid #EEE; max-height: 200px; overflow-y: auto; }
-        .leg-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-        .leg-item { width: 48%; display: flex; align-items: center; font-size: 12px; color: #555; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
-
         .main { flex: 1; display: flex; flex-direction: column; position: relative; }
-        .header { padding: 15px 20px; background: #fff; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); z-index: 10; }
+        .header { padding: 15px 20px; background: #fff; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
         .h-tit { font-size: 20px; font-weight: 800; }
-        .h-sub { font-size: 13px; color: #888; }
         .menu-btn { display: none; font-size: 24px; margin-right: 15px; cursor: pointer; }
 
-        .grid-viewport { flex: 1; overflow: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; cursor: grab; background: #F5F7FA; }
-        .grid-viewport.active { cursor: grabbing; }
+        .grid-vp { flex: 1; overflow: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; cursor: grab; background: #F5F7FA; }
+        .grid-vp.active { cursor: grabbing; }
         .grid { display: grid; gap: var(--gap); padding: 20px; background: #fff; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 80px; }
 
-        /* === 细胞样式 === */
-        .cell {
-            width: var(--size); height: var(--size);
-            border-radius: 14px; background: #FFF;
-            border: 1px solid #EEE;
-            position: relative; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-        }
+        /* 核心样式 */
+        .cell { width: var(--size); height: var(--size); border-radius: 14px; background: #FFF; border: 1px solid #EEE; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .cell:active { transform: scale(0.95); }
         .cell.empty { border: 1px dashed #DDD; background: #FAFAFA; pointer-events: none; }
-        .cell.st-1 { background-color: rgba(255, 149, 0, 0.15) !important; border-color: #FFDCA8; }
-        .cell.st-2 { background-color: rgba(95, 99, 104, 0.15) !important; border-color: #CCC; }
+        .ring { position: absolute; inset: 4px; border-radius: 50%; z-index: 1; background: rgba(0,0,0,0.06); }
+        .core { position: absolute; inset: 9px; border-radius: 50%; background: #888; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; line-height: 1.1; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .t-main { font-size: 13px; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.2); max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .t-sub { font-size: 9px; opacity: 0.9; margin-top: 1px; max-width: 80%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .warn { position: absolute; top: 0; right: 0; width: 16px; height: 16px; background: #D93025; color: #fff; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; z-index: 5; border: 2px solid #fff; font-weight: bold;}
 
-        /* Layer 1: 圆环 */
-        .ring {
-            position: absolute; inset: 4px; border-radius: 50%;
-            background: rgba(0,0,0,0.06); 
-            z-index: 1;
-        }
-        /* Layer 2: 核心 */
-        .core {
-            position: absolute; inset: 9px; border-radius: 50%;
-            background: #888; z-index: 2;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            color: #fff; line-height: 1.1;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        }
-        .t-main { font-size: 14px; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.2); max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-        .t-sub { font-size: 9px; opacity: 0.9; font-weight: normal; margin-top: 1px; max-width: 80%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-        .warn { position: absolute; top: 0px; right: 0px; width: 16px; height: 16px; background: #D93025; color: #fff; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; z-index: 5; border: 2px solid #fff; font-weight: bold;}
-
-        /* 高亮 */
-        .cell.dim { opacity: 0.1; filter: grayscale(100%); }
-        .cell.hi { transform: scale(1.15); z-index: 10; box-shadow: 0 0 0 4px #007AFF; border-radius: 14px; }
-
+        /* 移动端 */
         @media (max-width: 768px) {
             .sidebar { position: absolute; height: 100%; transform: translateX(-100%); width: 85%; box-shadow: 5px 0 20px rgba(0,0,0,0.2); }
             .sidebar.show { transform: translateX(0); }
             .menu-btn { display: block; }
             .overlay { display: none; position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 15; }
             .overlay.show { display: block; }
-            .grid-viewport { padding: 20px; }
+            .grid-vp { padding: 20px; }
             :root { --size: 64px; --gap: 8px; }
         }
 
+        /* 弹窗 */
         .modal-mask { position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 99; display: none; }
         .modal-mask.show { display: block; }
         .modal { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; border-radius: 20px 20px 0 0; padding: 25px; z-index: 100; transform: translateY(100%); transition: 0.3s; }
         .modal.show { transform: translateY(0); }
         .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #F9F9F9; font-size: 14px; }
-        .tag { background: #F0F2F5; padding: 4px 10px; border-radius: 6px; font-size: 12px; margin-right: 5px; font-weight: 600; color: #555; }
-        .loading { position: fixed; inset:0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #F0F2F5; z-index: 200; color: #888; }
+        
+        /* 诊断层 */
+        .loading { position: fixed; inset:0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #F0F2F5; z-index: 200; color: #555; padding: 20px; text-align: center; }
+        .err-log { margin-top: 20px; color: #D93025; background: #FFF0F0; padding: 10px; border: 1px solid #D93025; border-radius: 8px; font-family: monospace; font-size: 12px; max-width: 100%; word-break: break-all; display: none; }
     </style>
 </head>
 <body>
 
 <div id="loading" class="loading">
     <div style="font-size:32px; margin-bottom:10px">📦</div>
-    <div id="loadText">Loading...</div>
+    <div id="loadText">Initializing...</div>
+    <div id="errLog" class="err-log"></div>
 </div>
 
 <div class="overlay" onclick="toggleMenu()"></div>
 
 <div class="sidebar" id="sidebar">
-    <div class="search-box">
-        <input type="text" class="search-inp" id="search" placeholder="Search...">
-    </div>
+    <div class="search-box"><input type="text" class="search-inp" id="search" placeholder="Search..."></div>
     <div class="list-wrap" id="boxList"></div>
-    <div class="legend" id="legend"></div>
 </div>
 
 <div class="main">
@@ -120,35 +84,47 @@
             <span class="menu-btn" onclick="toggleMenu()">☰</span>
             <div>
                 <div class="h-tit" id="vTitle">-</div>
-                <div class="h-sub" id="vMeta">-</div>
             </div>
         </div>
     </div>
-    <div class="grid-viewport" id="vp">
+    <div class="grid-vp" id="vp">
         <div class="grid" id="grid"></div>
     </div>
 </div>
 
 <div class="modal-mask" onclick="closeM()"></div>
 <div class="modal" id="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+    <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
         <span id="mCoord" style="background:#007AFF;color:#fff;padding:4px 10px;border-radius:8px;font-weight:bold">-</span>
-        <span onclick="closeM()" style="font-size:24px;color:#CCC;cursor:pointer">&times;</span>
+        <span onclick="closeM()" style="font-size:24px;color:#CCC;">&times;</span>
     </div>
-    <h3 id="mName" style="margin:0 0 5px 0; font-size:18px">-</h3>
+    <h3 id="mName" style="margin:0 0 5px 0;">-</h3>
     <div id="mType" style="color:#888; font-size:13px; margin-bottom:15px">-</div>
-    <div class="row"><span id="lbl_st">St</span><span id="mStatus" style="font-weight:600">-</span></div>
+    <div class="row"><span id="lbl_st">Status</span><span id="mStatus" style="font-weight:600">-</span></div>
     <div class="row"><span id="lbl_op">Op</span><span id="mOp" style="font-weight:600">-</span></div>
-    <div class="row"><span id="lbl_dt">Dt</span><span id="mDate" style="font-weight:600">-</span></div>
-    <div class="row"><span id="lbl_vl">Vo</span><span id="mVol" style="font-weight:600">-</span></div>
-    <div id="mTags" style="margin-top:15px; display:flex; flex-wrap:wrap; gap:5px"></div>
-    <div id="mDesc" style="margin-top:15px; background:#F9FAFB; padding:10px; border-radius:8px; font-size:13px; color:#555; display:none"></div>
+    <div class="row"><span id="lbl_dt">Date</span><span id="mDate" style="font-weight:600">-</span></div>
+    <div class="row"><span id="lbl_vl">Vol</span><span id="mVol" style="font-weight:600">-</span></div>
+    <div id="mDesc" style="margin-top:15px; background:#F9FAFB; padding:10px; border-radius:8px; font-size:13px; color:#555;"></div>
 </div>
 
 <script>
-    let DATA = {}, UI = {}, CL = {}, DB = [];
-    let curBox = null;
+    function logError(msg) {
+        document.getElementById('loadText').textContent = "⚠️ Error Occurred";
+        const el = document.getElementById('errLog');
+        el.style.display = 'block';
+        el.innerText += msg + "\n";
+        console.error(msg);
+    }
 
+    // 全局错误捕获
+    window.onerror = function(msg, url, line) {
+        logError(`JS Error: ${msg} (Line ${line})`);
+        return false;
+    };
+
+    let DATA = {}, UI = {}, CL = {}, DB = [], curBox = null;
+
+    // 拖拽
     const vp = document.getElementById('vp');
     let isDown=false, startX, startY, sL, sT;
     vp.addEventListener('mousedown', e => { isDown=true; vp.classList.add('active'); startX=e.pageX-vp.offsetLeft; startY=e.pageY-vp.offsetTop; sL=vp.scrollLeft; sT=vp.scrollTop; });
@@ -159,17 +135,20 @@
     window.onload = async function() {
         try {
             const hash = window.location.hash.substring(1);
-            if(!hash) throw "No Data";
+            if(!hash) throw "URL has no data (Hash is empty)";
             
+            document.getElementById('loadText').textContent = "Decoding data...";
+            
+            // Base64 Fix
             let b64 = hash.replace(/-/g, '+').replace(/_/g, '/');
-            const pad = b64.length % 4; 
-            if(pad) b64 += '='.repeat(4-pad);
+            while(b64.length % 4) b64 += '=';
             
             const bin = atob(b64);
             const bytes = new Uint8Array(bin.length);
             for(let i=0; i<bin.length; i++) bytes[i] = bin.charCodeAt(i);
 
             let json;
+            // Unzip
             try {
                 if(window.fflate) {
                     const dec = fflate.decompressSync(bytes);
@@ -179,33 +158,41 @@
                     const w = new Blob([bytes]).stream().pipeThrough(ds);
                     json = await new Response(w).text();
                 } else {
+                    // Fallback raw
                     json = decodeURIComponent(escape(atob(b64))); 
                 }
-            } catch(e) { console.log(e); json = decodeURIComponent(escape(atob(b64))); }
+            } catch(e) { 
+                // Last resort
+                json = decodeURIComponent(escape(atob(b64))); 
+            }
 
+            if(!json || json[0] !== '{') throw "Decoded data is not JSON";
+            
             DATA = JSON.parse(json);
             
-            if(DATA.v === 5) {
+            // Version Check
+            if(DATA.v === 6) {
                 DB = DATA.db; UI = DATA.cfg.ui; CL = DATA.cfg.colors;
-            } else if(DATA.v === 4) {
-                DB = DATA.db; UI = DATA.ui; CL = DATA.cl;
+            } else if(DATA.v >= 4) {
+                DB = DATA.db; UI = DATA.ui; CL = DATA.cl || DATA.cfg.colors;
             } else {
-                // 简单的向下兼容
                 DB = Array.isArray(DATA) ? DATA : (DATA.boxes || [DATA]);
-                UI = { title:"Box", search:"Search", legend:"Legend", meta_fmt:"{s} • {c}", st:{0:"In",1:"Out",2:"Bad"}, fields:{st:"St",op:"Op",dt:"Dt",vol:"Vol"} };
+                // Fallback UI
+                UI = { title:"Box", search:"Search", st:{0:"In",1:"Out",2:"Bad"}, fields:{st:"St",op:"Op",dt:"Dt",vol:"Vol"} };
                 CL = { types:{}, st:{0:"#34C759",1:"#FF9500",2:"#FF3B30"} };
             }
+            
+            if(!DB || DB.length === 0) throw "Database is empty";
             
             setupUI();
             init();
         } catch(e) {
-            document.getElementById('loadText').innerHTML = "⚠️ Error<br><small>Update Software</small>";
+            logError(e.toString());
         }
     };
 
     function setupUI() {
-        document.getElementById('search').placeholder = "🔍 " + UI.search;
-        document.getElementById('vTitle').textContent = UI.title;
+        document.getElementById('search').placeholder = UI.search;
         document.getElementById('lbl_st').textContent = UI.fields.st;
         document.getElementById('lbl_op').textContent = UI.fields.op;
         document.getElementById('lbl_dt').textContent = UI.fields.dt;
@@ -215,22 +202,7 @@
     function init() {
         document.getElementById('loading').style.display = 'none';
         renderSidebar();
-        renderLegend();
         if(DB.length > 0) loadBox(DB[0].id);
-    }
-
-    function renderLegend() {
-        const d = document.getElementById('legend');
-        d.innerHTML = `<div style="font-size:12px;font-weight:bold;color:#aaa;margin-bottom:8px">${UI.legend}</div><div class="leg-grid" id="lg"></div>`;
-        const g = document.getElementById('lg');
-        
-        g.innerHTML += `<div class="leg-item"><div class="dot" style="background:${CL.st[0]}"></div>${UI.st[0]}</div>`;
-        g.innerHTML += `<div class="leg-item"><div class="dot" style="background:${CL.st[1]}"></div>${UI.st[1]}</div>`;
-        g.innerHTML += `<div class="leg-item"><div class="dot" style="background:${CL.st[2]}"></div>${UI.st[2]}</div>`;
-        
-        for(let [k,v] of Object.entries(CL.types)) {
-            g.innerHTML += `<div class="leg-item"><div class="dot" style="background:${v}"></div>${k}</div>`;
-        }
     }
 
     function renderSidebar() {
@@ -255,19 +227,21 @@
         document.querySelectorAll('.box-row').forEach(e => e.classList.remove('active'));
         document.getElementById(`btn-${bid}`).classList.add('active');
         document.getElementById('vTitle').textContent = curBox.n;
-        document.getElementById('vMeta').textContent = UI.meta_fmt.replace("{s}", curBox.s).replace("{c}", curBox.d.length);
 
-        // 容错处理：如果 s 解析失败，默认 9x9
+        // Safer parse
         let R=9, C=9;
-        try { [R, C] = curBox.s.split('x').map(Number); } catch(e){}
-        if(!R || !C) { R=9; C=9; }
+        try { 
+            const parts = curBox.s.split('x');
+            R = parseInt(parts[0]) || 9;
+            C = parseInt(parts[1]) || 9;
+        } catch(e){ R=9; C=9; }
 
         const grid = document.getElementById('grid');
         grid.style.gridTemplateColumns = `repeat(${C}, var(--size))`;
         grid.innerHTML = '';
 
         const map = new Map();
-        curBox.d.forEach(d => map.set(`${d[0]},${d[1]}`, d));
+        if(curBox.d) curBox.d.forEach(d => map.set(`${d[0]},${d[1]}`, d));
 
         for(let r=0; r<R; r++){
             for(let c=0; c<C; c++){
@@ -280,63 +254,53 @@
                     
                     el.className = `cell st-${st}`;
                     
-                    // 1. 圆环
+                    // Ring
                     let ringHtml = '';
                     const v = Number(vol) || 0;
                     const m = Number(max) || 0;
-                    
                     if (m > 0) {
                         let deg = (v / m) * 360;
-                        if(isNaN(deg)) deg = 0; // 防止NaN
-                        const color = (st===0 && m>0 && (v/m)<0.3) ? '#D93025' : '#333';
+                        if(isNaN(deg)) deg = 0;
+                        const color = (st===0 && (v/m)<0.3) ? '#D93025' : '#333';
                         ringHtml = `<div class="ring" style="background:conic-gradient(${color} 0deg ${deg}deg, rgba(0,0,0,0.06) ${deg}deg 360deg)"></div>`;
                     } else {
-                        ringHtml = `<div class="ring"></div>`; 
+                        ringHtml = `<div class="ring"></div>`;
                     }
 
-                    // 2. 核心
+                    // Core
                     const color = CL.types[type] || '#888';
                     const mainTxt = (short && short.trim()) ? short : name;
-                    
                     let warnHtml = '';
                     if(st === 0 && m > 0 && (v/m)<0.3) warnHtml = `<div class="warn">!</div>`;
 
-                    el.innerHTML = `
-                        ${ringHtml} ${warnHtml}
-                        <div class="core" style="background:${color}">
-                            <div class="t-main">${mainTxt.substring(0,4)}</div>
-                            ${feat ? `<div class="t-sub">${feat.substring(0,5)}</div>` : ''}
-                        </div>
-                    `;
+                    el.innerHTML = `${ringHtml}${warnHtml}<div class="core" style="background:${color}"><div class="t-main">${mainTxt.substring(0,4)}</div>${feat ? `<div class="t-sub">${feat.substring(0,5)}</div>` : ''}</div>`;
                     
                     el.onclick = () => showM(item, coord);
-                    el.dataset.txt = [name, short, type, feat, res, coord].join(' ').toLowerCase();
+                    el.dataset.txt = [name, short, type, feat, coord].join(' ').toLowerCase();
                 } else {
                     el.className = 'cell empty';
                 }
                 grid.appendChild(el);
             }
         }
-        doSearch();
     }
 
-    document.getElementById('search').addEventListener('input', doSearch);
-    function doSearch() {
-        const k = document.getElementById('search').value.toLowerCase().trim();
+    document.getElementById('search').addEventListener('input', (e) => {
+        const k = e.target.value.toLowerCase().trim();
         DB.forEach(b => {
             const btn = document.getElementById(`btn-${b.id}`);
-            const m = b.n.toLowerCase().includes(k) || b.d.some(d => (d[2]+(d[12]||'')).toLowerCase().includes(k));
+            // Simple filter
+            const m = b.n.toLowerCase().includes(k);
             btn.style.display = (!k || m) ? 'flex' : 'none';
         });
         document.querySelectorAll('.cell').forEach(el => {
             if(el.classList.contains('empty')) return;
-            if(!k) { el.classList.remove('dim','hi'); }
+            if(!k) { el.style.opacity = '1'; }
             else {
-                if(el.dataset.txt.includes(k)) { el.classList.add('hi'); el.classList.remove('dim'); }
-                else { el.classList.add('dim'); el.classList.remove('hi'); }
+                el.style.opacity = el.dataset.txt.includes(k) ? '1' : '0.1';
             }
         });
-    }
+    });
 
     function showM(i, coord) {
         const [row, col, name, type, st, feat, res, op, date, desc, vol, max, short] = i;
@@ -345,7 +309,7 @@
         document.getElementById('mName').textContent = name;
         document.getElementById('mType').textContent = type + (short ? ` (${short})` : '');
         
-        document.getElementById('mStatus').textContent = UI.st[st];
+        document.getElementById('mStatus').textContent = UI.st[st] || '-';
         let sc = CL.st[0];
         if(st===1) sc = CL.st[1];
         if(st===2) sc = CL.st[2];
@@ -354,24 +318,18 @@
         document.getElementById('mOp').textContent = op || '-';
         document.getElementById('mDate').textContent = date || '-';
         
-        let v = '-';
-        const mx = Number(max) || 0;
-        const vl = Number(vol) || 0;
-        if(mx > 0) v = `${vl} / ${mx} μL`;
-        document.getElementById('mVol').textContent = v;
+        const v = Number(vol)||0, mx = Number(max)||0;
+        document.getElementById('mVol').textContent = mx > 0 ? `${v} / ${mx}` : '-';
         
-        const t = document.getElementById('mTags'); t.innerHTML = '';
-        if(feat) t.innerHTML += `<span class="tag" style="background:#E3F2FD;color:#1967D2">🧬 ${feat}</span>`;
-        if(res) res.split(',').forEach(x => t.innerHTML += `<span class="tag">💊 ${x}</span>`);
-        
-        const d = document.getElementById('mDesc');
-        if(desc) { d.style.display='block'; d.textContent=desc; } else d.style.display='none';
+        document.getElementById('mDesc').textContent = desc || '';
+        document.getElementById('mDesc').style.display = desc ? 'block' : 'none';
         
         document.querySelector('.modal-mask').classList.add('show');
         document.querySelector('.modal').classList.add('show');
     }
+    
     function closeM() { document.querySelector('.modal-mask').classList.remove('show'); document.querySelector('.modal').classList.remove('show'); }
-    function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); document.querySelector('.overlay').classList.toggle('show'); }
+    function toggleMenu() { document.getElementById('sidebar').classList.toggle('show'); document.querySelector('.overlay').classList.toggle('show'); }
 </script>
 </body>
 </html>
