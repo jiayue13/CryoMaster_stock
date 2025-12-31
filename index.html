@@ -7,77 +7,66 @@
     <title>CryoMaster View</title>
     <script src="https://unpkg.com/fflate@0.8.0"></script>
     <style>
-        /* === 变量定义 (V20 旗舰氛围版) === */
+        /* === 变量定义 (V22 动态同步版) === */
         :root {
-            /* Light Mode */
-            /* [升级] 背景不再是纯色，而是渐变基调 */
+            /* 1. 环境氛围 */
             --bg-gradient: linear-gradient(135deg, #F6F9FC 0%, #EBF1F5 100%);
-            
-            /* [升级] 卡片半透明，启用磨砂 */
             --card-bg: rgba(255, 255, 255, 0.75);
             --sidebar-bg: rgba(255, 255, 255, 0.85);
             
             --text: #1E293B; 
             --sub: #64748B;
-            --border: rgba(0, 0, 0, 0.08); /* 更轻透的边框 */
+            --border: rgba(0, 0, 0, 0.08);
             
             --primary: #3B82F6; 
-            --primary-light: #60A5FA;
             --primary-fade: rgba(59, 130, 246, 0.12); 
-            
             --warn: #EF4444;
             --hover: rgba(0, 0, 0, 0.03);
             
-            /* 孔位样式 (完全保留 V19.2) */
+            /* 2. 孔位基础 */
             --cell-size: 64px; 
             --gap: 10px;
-            --cell-bg: #FFFFFF;
             --cell-bd-width: 2px;
-            --cell-bd-col: #CBD5E1;
-            --cell-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
-            --ring-bg: rgba(0,0,0,0.06);
+            --cell-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            --ring-bg: rgba(0,0,0,0.08);
             
-            /* 状态色 */
-            --st-0: #FFFFFF; --st-1: #FEF2F2; --st-2: #F1F5F9;
+            /* 3. 状态颜色 (默认值，会被 JS 覆盖) */
+            --st-0: #E8F5E9; 
+            --st-1: #FFF3E0; 
+            --st-2: #FFEBEE;
+            
+            /* 边框颜色默认跟随状态色，但加一层滤镜效果 */
+            --bd-0: var(--st-0); 
+            --bd-1: var(--st-1);
+            --bd-2: var(--st-2);
+
             --shadow: 0 1px 3px rgba(0,0,0,0.05);
-            
-            /* [新增] 氛围光晕颜色 */
             --glow: rgba(59, 130, 246, 0.15);
             --axis-col: #475569;
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
-                /* Dark Mode */
-                /* [升级] 深邃星空渐变 */
                 --bg-gradient: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-                
                 --card-bg: rgba(30, 41, 59, 0.70);
                 --sidebar-bg: rgba(15, 23, 42, 0.80);
-                
                 --text: #F1F5F9; 
                 --sub: #94A3B8;
                 --border: rgba(255, 255, 255, 0.1);
-                
                 --primary: #60A5FA; 
-                --primary-light: #93C5FD;
                 --primary-fade: rgba(96, 165, 250, 0.2);
-                
                 --warn: #F87171;
                 --hover: rgba(255, 255, 255, 0.05);
                 
-                --cell-bg: #1E293B;
-                --cell-bd-col: #475569;
-                --cell-shadow: inset 0 2px 4px rgba(0,0,0,0.25);
+                /* Dark 模式下，JS 覆盖的颜色如果不合适，这里可以通过透明度修正 */
+                /* 但为了保持一致性，JS 会直接写入 RGB 值 */
+
+                --cell-shadow: inset 0 1px 2px rgba(255,255,255,0.05);
                 --ring-bg: rgba(255,255,255,0.15);
-                
-                --st-0: #1E293B; --st-1: #281818; --st-2: #18181b;
                 --shadow: none;
-                
                 --glow: rgba(96, 165, 250, 0.1);
                 --axis-col: #CBD5E1;
             }
-            
             .search-inp { background: rgba(0,0,0,0.3) !important; color: #FFF !important; border-color: var(--border) !important;}
             .warn-box { background: rgba(239, 68, 68, 0.2) !important; }
         }
@@ -86,9 +75,8 @@
         
         body { 
             margin: 0; 
-            /* [升级] 启用全屏渐变背景 */
             background: var(--bg-gradient); 
-            background-attachment: fixed; /* 背景固定，内容滚动 */
+            background-attachment: fixed; 
             color: var(--text); 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             height: 100vh; 
@@ -96,12 +84,11 @@
             overflow: hidden; 
         }
 
-        /* [升级] 磨砂玻璃效果侧边栏 */
+        /* 侧边栏 */
         .sidebar { 
             width: 300px; 
             background: var(--sidebar-bg); 
-            backdrop-filter: blur(20px); /* 毛玻璃核心 */
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border-right: 1px solid var(--border); 
             display: flex; flex-direction: column; 
             z-index: 20; flex-shrink: 0; 
@@ -113,7 +100,7 @@
         .search-inp { 
             width: 100%; padding: 10px 14px; border-radius: 10px; 
             border: 1px solid var(--border); 
-            background: rgba(255,255,255,0.5); /* 半透明输入框 */
+            background: rgba(255,255,255,0.5); 
             font-size: 14px; outline: none; transition: all 0.3s; color: var(--text); 
         }
         .search-inp:focus { 
@@ -133,7 +120,6 @@
         .folder-icon { margin-right: 10px; font-size: 12px; color: var(--sub); transition: transform 0.2s; display: inline-block; width: 16px; text-align: center;}
         .folder-row.expanded .folder-icon { transform: rotate(90deg); color: var(--primary); }
         
-        /* [升级] 列表项样式 */
         .box-row { 
             padding: 10px 16px 10px 12px; 
             cursor: pointer; display: flex; justify-content: space-between; align-items: center; 
@@ -143,17 +129,8 @@
             position: relative; overflow: hidden;
         }
         .box-row:hover { background: var(--hover); transform: translateX(2px); }
-        
-        /* [升级] 激活状态：左侧光标条 + 渐变背景 */
-        .box-row.active { 
-            background: var(--primary-fade); 
-            color: var(--primary); 
-            font-weight: 600; 
-        }
-        .box-row.active::before {
-            content: ""; position: absolute; left: 0; top: 15%; bottom: 15%; width: 3px; 
-            background: var(--primary); border-radius: 0 3px 3px 0;
-        }
+        .box-row.active { background: var(--primary-fade); color: var(--primary); font-weight: 600; }
+        .box-row.active::before { content: ""; position: absolute; left: 0; top: 15%; bottom: 15%; width: 3px; background: var(--primary); border-radius: 0 3px 3px 0; }
         
         .b-n { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 170px; display: flex; align-items: center; }
         .b-icon { margin-right: 8px; font-size: 16px; opacity: 0.8; filter: grayscale(1); transition: filter 0.2s; }
@@ -168,12 +145,10 @@
 
         .main { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; }
         
-        /* [升级] 顶部半透明标题栏 */
         .header { 
             padding: 0 30px; 
             background: var(--card-bg); 
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border); 
             display: flex; justify-content: space-between; align-items: center; 
             z-index: 10; height: 70px; flex-shrink: 0;
@@ -187,19 +162,16 @@
         .grid-vp { flex: 1; overflow: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; cursor: grab; position: relative; }
         .grid-vp.active { cursor: grabbing; }
         
-        /* [升级] 网格容器：悬浮感 + 漫射光 */
         .grid { 
             display: grid; padding: 24px; 
             background: var(--card-bg); 
             backdrop-filter: blur(10px);
             border-radius: 20px; 
             border: 1px solid var(--border);
-            /* 更有质感的双层阴影 */
             box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.1);
             margin-bottom: 60px; 
             position: relative;
         }
-        /* 装饰性光晕 */
         .grid::before {
             content: ""; position: absolute; inset: -20px; z-index: -1;
             background: radial-gradient(circle at center, var(--glow), transparent 70%);
@@ -213,33 +185,43 @@
             user-select: none; font-family: ui-monospace, monospace;
         }
 
-        /* === 盒子样式 (保留 V19.2) === */
+        /* 盒子样式 */
         .cell { 
             width: var(--cell-size); height: var(--cell-size); 
             border-radius: 12px; 
-            background: var(--cell-bg); 
+            background: #FFF; 
+            /* 边框颜色默认跟随 */
             border: var(--cell-bd-width) solid var(--cell-bd-col); 
             position: relative; cursor: pointer; 
             display: flex; align-items: center; justify-content: center; 
-            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1); /* 弹性动画 */
+            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1); 
             box-shadow: var(--cell-shadow);
         }
-        .cell:hover { transform: scale(1.05); z-index: 5; border-color: var(--primary); }
+        
+        /* 状态覆盖：使用 CSS 变量，这些变量会被 JS 动态修改 */
+        .cell.s-0 { background-color: var(--st-0); border-color: var(--st-0); }
+        .cell.s-1 { background-color: var(--st-1); border-color: var(--st-1); }
+        .cell.s-2 { background-color: var(--st-2); border-color: var(--st-2); }
+        
+        /* 为了防止颜色太浅导致边框看不清，给边框加一个 brightness 滤镜的 trick 其实很难兼容 */
+        /* 所以我们直接让 JS 注入时尽量保持原色，或者依赖内阴影来区分 */
+        /* 这里加一个 mix-blend-mode 或者是简单的 filter 稍微加深边框视觉 */
+        .cell.s-0, .cell.s-1, .cell.s-2 { background-clip: padding-box; }
+
+        .cell:hover { transform: scale(1.05); z-index: 5; border-color: var(--primary) !important; }
         .cell:active { transform: scale(0.95); }
         .cell.empty { border: 2px dashed var(--border); opacity: 0.3; background: transparent; pointer-events: none; box-shadow: none;}
-        
-        .cell.s-1 { background-color: var(--st-1); border-color: rgba(239, 68, 68, 0.2); }
-        .cell.s-2 { background-color: var(--st-2); border-color: var(--border); opacity: 0.6; }
 
         .ring { position: absolute; inset: 4px; border-radius: 50%; z-index: 1; background: var(--ring-bg); }
+        
         .core { position: absolute; inset: 8px; border-radius: 50%; background: #94A3B8; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
         .t-main { font-size: 11px; font-weight: 700; max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 2px; letter-spacing: -0.3px;}
         .t-sub { font-size: 9px; opacity: 0.95; font-weight: 600; margin-top: 1px; max-width: 85%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; transform: scale(0.9);}
         
-        .warn { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; background: var(--warn); border: 3px solid var(--cell-bg); border-radius: 50%; z-index: 5; color: #fff; font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .warn { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; background: var(--warn); border: 3px solid #FFF; border-radius: 50%; z-index: 5; color: #fff; font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         
         .cell.dim { opacity: 0.15; filter: grayscale(100%); }
-        .cell.hi { transform: scale(1.15); z-index: 10; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-fade); }
+        .cell.hi { transform: scale(1.15); z-index: 10; border-color: var(--primary) !important; box-shadow: 0 0 0 3px var(--primary-fade); }
 
         @media (max-width: 768px) {
             .sidebar { width: 85%; max-width: 320px; border-right: none;}
@@ -251,7 +233,6 @@
             .grid { padding: 15px; border-radius: 16px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
         }
 
-        /* 详情弹窗 (拟态风格) */
         .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.3); z-index: 99; display: none; backdrop-filter: blur(5px); }
         .m-mask.show { display: block; }
         .modal { 
@@ -373,6 +354,14 @@
                     CL = { types: DATA.types || {}, st: {} };
                 }
                 
+                // === [关键] 动态注入颜色到 CSS 变量 ===
+                if(CL.st) {
+                    const r = document.documentElement;
+                    if(CL.st[0]) r.style.setProperty('--st-0', CL.st[0]);
+                    if(CL.st[1]) r.style.setProperty('--st-1', CL.st[1]);
+                    if(CL.st[2]) r.style.setProperty('--st-2', CL.st[2]);
+                }
+
                 if(!UI.title) UI.title = "CryoMaster";
                 if(!UI.fields) UI.fields = {st:"Status", op:"Op", dt:"Date", vol:"Vol", warn:"Warning"};
                 
@@ -598,7 +587,10 @@
         const stEl = document.getElementById('mStatus');
         const stTxt = (UI.st_txt && UI.st_txt[st]) ? UI.st_txt[st] : (st===0?"In Stock":st===1?"Removed":"Discarded");
         stEl.textContent = stTxt;
-        stEl.style.color = (st===0?'var(--text)':(st===1?'var(--warn)':'var(--sub)'));
+        // 动态适配颜色
+        if(st===0) stEl.style.color = 'var(--text)';
+        else if(st===1) stEl.style.color = '#E65100';
+        else stEl.style.color = 'var(--warn)';
         
         document.getElementById('mOp').textContent = op || '-';
         document.getElementById('mDate').textContent = dt || '-';
