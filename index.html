@@ -7,7 +7,7 @@
     <title>CryoMaster View</title>
     <script src="https://unpkg.com/fflate@0.8.0"></script>
     <style>
-        /* === 变量定义 (V24 交互增强版) === */
+        /* === 变量定义 (V25 视觉降噪版) === */
         :root {
             /* 1. 环境氛围 */
             --bg-gradient: linear-gradient(135deg, #F6F9FC 0%, #EBF1F5 100%);
@@ -16,29 +16,38 @@
             
             --text: #1E293B; 
             --sub: #64748B;
-            --border: rgba(0, 0, 0, 0.08);
+            --border: rgba(0, 0, 0, 0.06); /* 边框更淡 */
             
             --primary: #3B82F6; 
             --primary-fade: rgba(59, 130, 246, 0.12); 
             --warn: #EF4444;
-            --hover: rgba(0, 0, 0, 0.03);
+            --hover: rgba(0, 0, 0, 0.04);
             
             /* 2. 孔位基础 */
             --cell-size: 80px; 
             --gap: 10px;
             --cell-bd-width: 3px;
             --cell-bd-col: #CBD5E1; 
-            --cell-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            
+            /* [修改] 投影逻辑 */
+            --cell-shadow: 0 2px 5px rgba(0,0,0,0.03); /* 实孔位：凸起投影 */
+            
+            /* [新增] 空孔位专用样式 (凹槽风格) */
+            --empty-shadow: inset 0 1px 3px rgba(0,0,0,0.06); /* 凹陷内阴影 */
+            --empty-bg: rgba(0,0,0,0.03); /* 极淡的填充色 */
+            
             --ring-bg: rgba(0,0,0,0.08);
             
-            /* 3. 状态颜色 (JS动态注入) */
+            /* 3. 状态颜色 */
             --st-0: #E8F5E9; 
             --st-1: #FFF3E0; 
             --st-2: #FFEBEE;
             
             --shadow: 0 1px 3px rgba(0,0,0,0.05);
             --glow: rgba(59, 130, 246, 0.15);
-            --axis-col: #475569;
+            
+            /* [修改] 坐标轴颜色：稍微淡一点，不抢视觉 */
+            --axis-col: #64748B; 
         }
 
         @media (prefers-color-scheme: dark) {
@@ -48,18 +57,23 @@
                 --sidebar-bg: rgba(15, 23, 42, 0.80);
                 --text: #F1F5F9; 
                 --sub: #94A3B8;
-                --border: rgba(255, 255, 255, 0.1);
+                --border: rgba(255, 255, 255, 0.08);
                 --primary: #60A5FA; 
                 --primary-fade: rgba(96, 165, 250, 0.2);
                 --warn: #F87171;
                 --hover: rgba(255, 255, 255, 0.05);
                 
                 --cell-bd-col: #475569;
-                --cell-shadow: inset 0 1px 2px rgba(255,255,255,0.05);
+                
+                --cell-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                /* Dark模式凹槽 */
+                --empty-shadow: inset 0 1px 3px rgba(0,0,0,0.3); 
+                --empty-bg: rgba(255,255,255,0.03); 
+
                 --ring-bg: rgba(255,255,255,0.15);
                 --shadow: none;
                 --glow: rgba(96, 165, 250, 0.1);
-                --axis-col: #CBD5E1;
+                --axis-col: #94A3B8;
             }
             .search-inp { background: rgba(0,0,0,0.3) !important; color: #FFF !important; border-color: var(--border) !important;}
             .warn-box { background: rgba(239, 68, 68, 0.2) !important; }
@@ -78,26 +92,19 @@
             overflow: hidden; 
         }
 
-        /* === [修改] 侧边栏基础样式 (PC/Mobile 通用) === */
+        /* 侧边栏 */
         .sidebar { 
-            width: 300px; /* 默认宽度 */
+            width: 300px; 
             background: var(--sidebar-bg); 
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border-right: 1px solid var(--border); 
             display: flex; flex-direction: column; 
             z-index: 20; flex-shrink: 0; 
-            /* 增加宽度过渡动画 */
             transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
             box-shadow: 5px 0 30px rgba(0,0,0,0.05);
-            overflow: hidden; /* 关键：折叠时隐藏内容 */
-            white-space: nowrap; /* 关键：防止文字换行 */
+            overflow: hidden; white-space: nowrap;
         }
-        
-        /* [新增] PC端折叠状态类 (加在body上) */
-        body.pc-collapsed .sidebar {
-            width: 0;
-            border-right: none;
-        }
+        body.pc-collapsed .sidebar { width: 0; border-right: none; }
         
         .search-box { padding: 20px; border-bottom: 1px solid var(--border); }
         .search-inp { 
@@ -106,11 +113,7 @@
             background: rgba(255,255,255,0.5); 
             font-size: 14px; outline: none; transition: all 0.3s; color: var(--text); 
         }
-        .search-inp:focus { 
-            border-color: var(--primary); 
-            background: var(--card-bg); 
-            box-shadow: 0 0 0 3px var(--primary-fade);
-        }
+        .search-inp:focus { border-color: var(--primary); background: var(--card-bg); box-shadow: 0 0 0 3px var(--primary-fade); }
         
         .list-wrap { flex: 1; overflow-y: auto; padding: 12px 0; }
 
@@ -148,9 +151,8 @@
         .leg-item { display: flex; align-items: center; font-size: 12px; color: var(--sub); width: 48%; }
         .dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; box-shadow: 0 0 0 1px var(--border);}
 
-        .main { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; /* main区域会自动填充剩余空间 */ }
+        .main { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; }
         
-        /* 顶部栏 */
         .header { 
             padding: 0 20px;
             background: var(--card-bg); 
@@ -161,9 +163,8 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.02);
         }
         
-        /* === [修改] 汉堡菜单按钮 (全平台显示) === */
         .menu-btn { 
-            display: block; /* PC和手机都显示 */
+            display: block; 
             font-size: 24px; padding: 8px 12px; margin-right: 4px; cursor: pointer; color: var(--text); 
             border-radius: 8px; transition: background 0.2s;
         }
@@ -196,12 +197,13 @@
         
         .axis { 
             display: flex; align-items: center; justify-content: center; 
-            font-size: 13px; font-weight: 800; 
-            color: var(--axis-col); opacity: 0.9; 
+            font-size: 12px; font-weight: 700; 
+            color: var(--axis-col); 
+            opacity: 0.8; /* 降低不透明度 */
             user-select: none; font-family: ui-monospace, monospace;
         }
 
-        /* 盒子孔位 */
+        /* 盒子样式 */
         .cell { 
             width: var(--cell-size); height: var(--cell-size); 
             border-radius: 12px; 
@@ -216,39 +218,43 @@
         .cell.s-0 { background-color: var(--st-0); border-color: var(--st-0); }
         .cell.s-1 { background-color: var(--st-1); border-color: var(--st-1); }
         .cell.s-2 { background-color: var(--st-2); border-color: var(--st-2); }
-        
         .cell.s-0, .cell.s-1, .cell.s-2 { background-clip: padding-box; }
 
         .cell:hover { transform: scale(1.05); z-index: 5; border-color: var(--primary) !important; }
         .cell:active { transform: scale(0.95); }
-        .cell.empty { border: 2px dashed var(--border); opacity: 0.3; background: transparent; pointer-events: none; box-shadow: none;}
+        
+        /* === [关键] 空孔位样式 (凹槽风格) === */
+        .cell.empty { 
+            border: none;  /* 去掉虚线 */
+            background: var(--empty-bg);  /* 淡色填充 */
+            box-shadow: var(--empty-shadow); /* 内阴影 */
+            opacity: 1; /* 保持可见 */
+            pointer-events: none; 
+        }
 
         .ring { position: absolute; inset: 4px; border-radius: 50%; z-index: 1; background: var(--ring-bg); }
         .core { position: absolute; inset: 8px; border-radius: 50%; background: #94A3B8; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
         .t-main { font-size: 11px; font-weight: 700; max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 2px; letter-spacing: -0.3px;}
         .t-sub { font-size: 9px; opacity: 0.95; font-weight: 600; margin-top: 1px; max-width: 85%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; transform: scale(0.9);}
+        
         .warn { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; background: var(--warn); border: 3px solid #FFF; border-radius: 50%; z-index: 5; color: #fff; font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         
         .cell.dim { opacity: 0.15; filter: grayscale(100%); }
         .cell.hi { transform: scale(1.15); z-index: 10; border-color: var(--primary) !important; box-shadow: 0 0 0 3px var(--primary-fade); }
 
-        /* === 移动端适配 (Max Width 768px) === */
         @media (max-width: 768px) {
-            /* 移动端侧边栏：抽屉模式 */
             .sidebar { 
                 position: fixed; 
                 height: 100%; 
                 top: 0; left: 0; bottom: 0;
-                transform: translateX(-100%); /* 默认移出屏幕 */
+                transform: translateX(-100%); 
                 width: 85%; max-width: 320px; 
                 box-shadow: 10px 0 30px rgba(0,0,0,0.2); 
                 border-right: none;
                 z-index: 1000;
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* 移动端使用 transform 过渡 */
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
             .sidebar.show { transform: translateX(0); }
-            
-            /* 确保PC端的折叠类不会影响移动端 */
             body.pc-collapsed .sidebar { width: 85%; } 
 
             .overlay { 
@@ -266,7 +272,6 @@
             .grid { padding: 12px; border-radius: 16px; }
         }
 
-        /* 详情弹窗 */
         .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.3); z-index: 99; display: none; backdrop-filter: blur(5px); }
         .m-mask.show { display: block; }
         .modal { 
@@ -345,18 +350,17 @@
     const vp = document.getElementById('vp');
     let isDown=false, sX, sY, sL, sT;
     
-    // PC端网格拖拽
     vp.addEventListener('mousedown', e => { isDown=true; vp.classList.add('active'); sX=e.pageX-vp.offsetLeft; sY=e.pageY-vp.offsetTop; sL=vp.scrollLeft; sT=vp.scrollTop; });
     vp.addEventListener('mouseleave', () => { isDown=false; vp.classList.remove('active'); });
     vp.addEventListener('mouseup', () => { isDown=false; vp.classList.remove('active'); });
     vp.addEventListener('mousemove', e => { if(!isDown)return; e.preventDefault(); const x=e.pageX-vp.offsetLeft; const y=e.pageY-vp.offsetTop; vp.scrollLeft=sL-(x-sX)*1.5; vp.scrollTop=sT-(y-sY)*1.5; });
 
-    // === [新增] 移动端手势滑动检测 ===
+    // === 移动端手势滑动 ===
     let touchStartX = 0;
     let touchEndX = 0;
     const sidebarEl = document.getElementById('sidebar');
-    const SWIPE_THRESHOLD = 60; // 滑动触发阈值
-    const EDGE_THRESHOLD = 50;  // 边缘检测区域宽度
+    const SWIPE_THRESHOLD = 60; 
+    const EDGE_THRESHOLD = 50;  
 
     document.addEventListener('touchstart', e => {
         touchStartX = e.changedTouches[0].screenX;
@@ -368,29 +372,20 @@
     }, {passive: true});
 
     function handleSwipe() {
-        // 仅在移动端触发
         if (window.innerWidth > 768) return;
-
         const swipeDistance = touchEndX - touchStartX;
         const isOpen = sidebarEl.classList.contains('show');
-
-        // 右滑 (打开)
         if (swipeDistance > SWIPE_THRESHOLD) {
-            // 只有从屏幕左边缘开始滑动才触发打开
             if (touchStartX < EDGE_THRESHOLD && !isOpen) {
                 toggleMenu();
             }
         }
-
-        // 左滑 (关闭)
         if (swipeDistance < -SWIPE_THRESHOLD) {
-            // 只要菜单是打开状态，任何左滑都触发关闭
             if (isOpen) {
                 toggleMenu();
             }
         }
     }
-    // =================================
 
     window.onload = async function() {
         try {
@@ -430,7 +425,6 @@
                     CL = { types: DATA.types || {}, st: {} };
                 }
                 
-                // 动态注入颜色
                 if(CL.st) {
                     const r = document.documentElement;
                     if(CL.st[0]) r.style.setProperty('--st-0', CL.st[0]);
@@ -506,7 +500,6 @@
                 itemDiv.onclick = (e) => { 
                     e.stopPropagation(); 
                     loadBox(b.id); 
-                    // 移动端点击后自动收起菜单
                     if(window.innerWidth <= 768) toggleMenu(); 
                 };
                 container.appendChild(itemDiv);
@@ -695,15 +688,12 @@
     
     function closeM() { document.querySelector('.m-mask').classList.remove('show'); document.querySelector('.modal').classList.remove('show'); }
     
-    // [修改] 统一的菜单切换逻辑
     function toggleMenu() { 
         const isMobile = window.innerWidth <= 768;
         if (isMobile) {
-            // 移动端：切换 class 显示抽屉和遮罩
             document.getElementById('sidebar').classList.toggle('show'); 
             document.querySelector('.overlay').classList.toggle('show');
         } else {
-            // PC端：切换 body class 来折叠宽度
             document.body.classList.toggle('pc-collapsed');
         }
     }
