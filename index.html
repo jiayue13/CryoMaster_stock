@@ -7,69 +7,61 @@
     <title>CryoMaster View</title>
     <script src="https://unpkg.com/fflate@0.8.0"></script>
     <style>
-        /* === 变量定义 (V19.1 坐标轴增强版) === */
+        /* === 变量定义 (自动适配深色模式) === */
         :root {
-            /* Light Mode */
-            --bg: #F4F6F9;
+            --bg: #F5F7FA; 
             --card: #FFFFFF; 
-            --text: #2C3E50;
-            --sub: #94A3B8;
-            --border: #E2E8F0;
-            --primary: #3B82F6;
-            --primary-bg: rgba(59, 130, 246, 0.1); 
-            --warn: #EF4444;
+            --text: #333333; 
+            --sub: #888888;
+            --border: #E5E5EA;
+            --primary: #007AFF; 
+            --primary-bg: rgba(0, 122, 255, 0.1); 
+            --warn: #D93025;
             
-            --hover: #F8FAFC;
-            --active-text: #2563EB;
+            --hover: #F2F2F7;
+            --active-text: #007AFF;
             
             --cell-size: 64px; 
-            --gap: 10px;
+            --gap: 8px;
             --cell-bg: #FFFFFF;
-            --cell-bd: #E2E8F0;
-            --ring-bg: rgba(0,0,0,0.04);
+            --cell-bd: #EAEAEA;
+            --ring-bg: rgba(0,0,0,0.06);
             
-            /* 状态色 */
-            --st-0: #FFFFFF;
-            --st-1: #FEF2F2;
-            --st-2: #F1F5F9;
+            /* [修改] 坐标轴颜色：深色，不透明 */
+            --axis-col: #334155; 
             
-            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.01);
-            
-            /* [新增] 坐标轴专用颜色：更深，不透明 */
-            --axis: #475569; 
+            /* 状态背景色默认值 */
+            --st-0: #E8F5E9; --st-1: #FFF3E0; --st-2: #FFEBEE;
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
-                /* Dark Mode */
-                --bg: #0F172A;
-                --card: #1E293B;
-                --text: #E2E8F0;
-                --sub: #64748B;
-                --border: #334155;
-                --primary: #60A5FA; 
-                --primary-bg: rgba(96, 165, 250, 0.15);
-                --warn: #F87171;
+                --bg: #000000; 
+                --card: #1C1C1E; 
+                --text: #F0F0F0; 
+                --sub: #98989D;
+                --border: #38383A;
+                --primary: #0A84FF; 
+                --primary-bg: rgba(10, 132, 255, 0.15);
+                --warn: #FF453A;
                 
-                --hover: #334155;
+                --hover: #2C2C2E;
                 --active-text: #FFFFFF;
                 
-                --cell-bg: #1E293B;
-                --cell-bd: #334155;
-                --ring-bg: rgba(255,255,255,0.1);
+                --cell-bg: #2C2C2E;
+                --cell-bd: #3A3A3C;
+                --ring-bg: rgba(255,255,255,0.15);
                 
-                --st-0: #1E293B; 
-                --st-1: #281818; 
-                --st-2: #18181b;
-
-                --shadow: none;
-                
-                /* [新增] Dark模式坐标轴：更亮 */
-                --axis: #CBD5E1; 
+                /* [修改] Dark模式坐标轴：亮色 */
+                --axis-col: #CBD5E1;
             }
+            /* 深色模式下强制状态色变暗 */
+            .cell.s-0 { background-color: rgba(48, 209, 88, 0.15) !important; }
+            .cell.s-1 { background-color: rgba(255, 159, 10, 0.15) !important; }
+            .cell.s-2 { background-color: rgba(255, 69, 58, 0.15) !important; }
             
-            .search-inp { background: #020617 !important; color: #FFF !important; border-color: #334155 !important;}
-            .warn-box { background: rgba(239, 68, 68, 0.15) !important; border-color: rgba(239, 68, 68, 0.2) !important; color: #FCA5A5 !important; }
+            .search-inp { background: #2C2C2E !important; color: #FFF !important; }
+            .warn-box { background: rgba(255, 69, 58, 0.15) !important; border-color: rgba(255, 69, 58, 0.3) !important; color: #FF453A !important; }
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
@@ -77,100 +69,96 @@
 
         /* 左侧边栏 */
         .sidebar { width: 300px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 20; flex-shrink: 0; transition: transform 0.3s; }
-        .search-box { padding: 16px; border-bottom: 1px solid var(--border); }
-        .search-inp { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); font-size: 14px; outline: none; transition: all 0.2s; color: var(--text); }
-        .search-inp:focus { border-color: var(--primary); background: var(--card); }
+        .search-box { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+        .search-inp { width: 100%; padding: 8px 12px; border-radius: 8px; border: none; background: #F5F7FA; font-size: 14px; outline: none; transition: background 0.3s; }
+        .search-inp:focus { background: var(--hover); }
         .list-wrap { flex: 1; overflow-y: auto; padding: 10px 0; }
 
         /* 树形菜单样式 */
-        .folder-row { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; font-size: 14px; font-weight: 600; color: var(--text); transition: background 0.1s; }
+        .folder-row { padding: 10px 16px; cursor: pointer; display: flex; align-items: center; font-size: 14px; font-weight: 600; color: var(--text); transition: background 0.1s; }
         .folder-row:hover { background: var(--hover); }
-        .folder-icon { margin-right: 10px; font-size: 12px; color: var(--sub); transition: transform 0.2s; display: inline-block; width: 16px; text-align: center;}
+        .folder-icon { margin-right: 8px; font-size: 12px; color: var(--sub); transition: transform 0.2s; display: inline-block; width: 16px; text-align: center;}
         .folder-row.expanded .folder-icon { transform: rotate(90deg); }
         
-        .box-row { padding: 10px 20px 10px 0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--text); margin: 2px 10px; border-radius: 8px; transition: all 0.1s; border: 1px solid transparent; }
+        .box-row { padding: 8px 16px 8px 0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--text); margin: 1px 8px; border-radius: 6px; transition: all 0.1s; border: 1px solid transparent; }
         .box-row:hover { background: var(--hover); }
-        .box-row.active { background: var(--primary-bg); color: var(--active-text); font-weight: 600; border-color: transparent; }
+        .box-row.active { background: var(--primary-bg); color: var(--active-text); border-color: var(--primary-bg); font-weight: 600; }
         .box-row.active .b-n, .box-row.active .b-p { color: var(--primary); }
         .b-n { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 170px; display: flex; align-items: center; }
-        .b-icon { margin-right: 8px; font-size: 16px; opacity: 0.8;}
-        .b-p { font-size: 12px; opacity: 0.6; margin-left: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;}
+        .b-icon { margin-right: 6px; font-size: 14px; }
+        .b-p { font-size: 12px; opacity: 0.6; margin-left: 8px; font-family: monospace;}
         .folder-cnt { display: none; }
         .folder-cnt.open { display: block; }
 
         /* 图例 */
-        .legend { padding: 20px; background: var(--card); border-top: 1px solid var(--border); min-height: 80px; max-height: 200px; overflow-y: auto; }
-        .leg-title { font-size: 11px; font-weight: bold; color: var(--sub); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .leg-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+        .legend { padding: 16px; background: var(--card); border-top: 1px solid var(--border); min-height: 80px; max-height: 200px; overflow-y: auto; }
+        .leg-title { font-size: 11px; font-weight: bold; color: var(--sub); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .leg-grid { display: flex; flex-wrap: wrap; gap: 8px; }
         .leg-item { display: flex; align-items: center; font-size: 12px; color: var(--sub); width: 48%; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; box-shadow: 0 0 0 1px rgba(0,0,0,0.05); }
+        .dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
 
         /* 主区域 */
         .main { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; }
-        .header { padding: 0 24px; background: var(--card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; z-index: 10; height: 64px; flex-shrink: 0;}
-        .h-tit { font-size: 20px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; letter-spacing: -0.5px;}
-        .h-sub { font-size: 13px; color: var(--sub); margin-top: 2px; display: flex; align-items: center; flex-wrap: wrap; }
-        .header-warn { color: var(--warn); font-weight: 600; margin-left: 12px; font-size: 12px; display: flex; align-items: center; background: rgba(239,68,68,0.08); padding: 4px 8px; border-radius: 6px; }
+        .header { padding: 0 20px; background: var(--card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.03); z-index: 10; height: 60px; flex-shrink: 0;}
+        .h-tit { font-size: 18px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;}
+        .h-sub { font-size: 12px; color: var(--sub); margin-top: 2px; display: flex; align-items: center; flex-wrap: wrap; }
+        .header-warn { color: var(--warn); font-weight: 700; margin-left: 10px; font-size: 12px; display: flex; align-items: center; background: rgba(217,48,37,0.08); padding: 2px 6px; border-radius: 4px; }
         .menu-btn { display: none; font-size: 20px; padding: 10px; margin-right: 5px; cursor: pointer; color: var(--text); }
 
         /* 网格 */
-        .grid-vp { flex: 1; overflow: auto; padding: 24px; display: flex; justify-content: center; align-items: flex-start; cursor: grab; background: var(--bg); position: relative; }
+        .grid-vp { flex: 1; overflow: auto; padding: 20px; display: flex; justify-content: center; align-items: flex-start; cursor: grab; background: var(--bg); position: relative; }
         .grid-vp.active { cursor: grabbing; }
-        .grid { display: grid; padding: 20px; background: var(--card); border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.01); margin-bottom: 40px; border: 1px solid var(--border); }
+        .grid { display: grid; padding: 15px; background: var(--card); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 40px; }
         
-        /* [修改] 坐标轴颜色增强 */
-        .axis { display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--axis); opacity: 1; font-family: ui-monospace, SFMono-Regular, monospace; }
+        /* [修改] 坐标轴样式增强 */
+        .axis { 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 13px; font-weight: 800; /* 加粗 */
+            color: var(--axis-col); /* 使用新变量 */
+            opacity: 1; /* 不透明 */
+            user-select: none;
+        }
 
-        /* 细胞 (保持 V19) */
-        .cell { width: var(--cell-size); height: var(--cell-size); border-radius: 12px; background: var(--cell-bg); border: 1px solid var(--cell-bd); position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; box-shadow: var(--shadow); }
-        .cell:hover { transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08); border-color: var(--primary); }
-        .cell:active { transform: scale(0.96); }
-        
-        .cell.empty { border: 1px dashed var(--border); opacity: 0.5; background: transparent; pointer-events: none; box-shadow: none; }
-        
-        .cell.s-1 { background-color: var(--st-1); border-color: rgba(239, 68, 68, 0.2); }
-        .cell.s-2 { background-color: var(--st-2); border-color: var(--border); opacity: 0.7; }
-
-        .ring { position: absolute; inset: 4px; border-radius: 50%; z-index: 1; background: var(--ring-bg); transition: all 0.3s; }
-        .core { position: absolute; inset: 9px; border-radius: 50%; background: #94A3B8; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-family: ui-monospace, SFMono-Regular, monospace;}
-        
-        .t-main { font-size: 12px; font-weight: 700; max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 2px; letter-spacing: -0.3px; }
-        .t-sub { font-size: 9px; opacity: 0.9; font-weight: 500; margin-top: 1px; max-width: 85%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-        
-        .warn { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; background: var(--warn); border: 2px solid var(--card); border-radius: 50%; z-index: 5; color: #fff; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
-        
-        .cell.dim { opacity: 0.2; filter: grayscale(100%); }
+        /* 细胞 */
+        .cell { width: var(--cell-size); height: var(--cell-size); border-radius: 8px; background: var(--cell-bg); border: 1px solid var(--cell-bd); position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
+        .cell:active { transform: scale(0.95); }
+        .cell.empty { border: 1px dashed var(--border); opacity: 0.4; background: transparent; pointer-events: none; }
+        .ring { position: absolute; inset: 3px; border-radius: 50%; z-index: 1; background: var(--ring-bg); }
+        .core { position: absolute; inset: 7px; border-radius: 50%; background: #999; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .t-main { font-size: 11px; font-weight: 700; max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 2px; }
+        .t-sub { font-size: 8px; opacity: 0.9; font-weight: 500; margin-top: 1px; max-width: 85%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .warn { position: absolute; top: -5px; right: -5px; width: 16px; height: 16px; background: var(--warn); border: 2px solid var(--card); border-radius: 50%; z-index: 5; color: #fff; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .cell.dim { opacity: 0.15; filter: grayscale(100%); }
         .cell.hi { transform: scale(1.1); z-index: 10; box-shadow: 0 0 0 2px var(--primary); border-color: var(--primary); }
 
         /* 移动端适配 */
         @media (max-width: 768px) {
-            .sidebar { position: absolute; height: 100%; transform: translateX(-100%); width: 85%; max-width: 320px; box-shadow: 10px 0 30px rgba(0,0,0,0.2); border-right: none;}
+            .sidebar { position: absolute; height: 100%; transform: translateX(-100%); width: 80%; max-width: 320px; box-shadow: 10px 0 30px rgba(0,0,0,0.2); }
             .sidebar.show { transform: translateX(0); }
             .menu-btn { display: block; }
             .overlay { display: none; position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 15; backdrop-filter: blur(2px); }
             .overlay.show { display: block; }
             .grid-vp { padding: 10px; align-items: flex-start; }
-            :root { --cell-size: 44px; --gap: 6px; }
-            .t-main { font-size: 10px; } .t-sub { display: none; }
+            :root { --cell-size: 42px; --gap: 4px; }
+            .t-main { font-size: 9px; } .t-sub { display: none; }
             .core { inset: 5px; } .ring { inset: 2px; }
             .h-tit { max-width: 160px; font-size: 16px; }
-            .grid { padding: 10px; border-radius: 12px; }
         }
 
         /* 详情弹窗 */
-        .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 99; display: none; backdrop-filter: blur(3px); }
+        .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.5); z-index: 99; display: none; backdrop-filter: blur(2px); }
         .m-mask.show { display: block; }
-        .modal { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); border-radius: 20px 20px 0 0; padding: 24px; z-index: 100; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.15); color: var(--text); border-top: 1px solid var(--border); max-height: 85vh; overflow-y: auto; }
+        .modal { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); border-radius: 16px 16px 0 0; padding: 24px; z-index: 100; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 -5px 30px rgba(0,0,0,0.2); color: var(--text); border-top: 1px solid var(--border); max-height: 85vh; overflow-y: auto; }
         .modal.show { transform: translateY(0); }
-        .row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
-        .lbl { color: var(--sub); font-size: 13px; font-weight: 500; } .val { font-weight: 600; color: var(--text); text-align: right; max-width: 70%; word-break: break-all;}
-        .tag { background: var(--bg); padding: 4px 10px; border-radius: 6px; font-size: 12px; margin-right: 6px; color: var(--text); border: 1px solid var(--border); display: inline-block; margin-bottom: 4px; font-weight: 500;}
-        .warn-box { margin-bottom: 20px; background: #FEF2F2; padding: 12px 16px; border-radius: 10px; font-size: 13px; color: var(--warn); border: 1px solid rgba(239, 68, 68, 0.15); display: flex; align-items: center; }
+        .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .lbl { color: var(--sub); font-size: 13px; } .val { font-weight: 500; color: var(--text); text-align: right; max-width: 70%; word-break: break-all;}
+        .tag { background: rgba(128,128,128,0.1); padding: 4px 8px; border-radius: 6px; font-size: 12px; margin-right: 6px; color: var(--text); border: 1px solid var(--border); display: inline-block; margin-bottom: 4px;}
+        .warn-box { margin-bottom: 15px; background: #FFF5F5; padding: 10px; border-radius: 8px; font-size: 13px; color: var(--warn); border: 1px solid rgba(217, 48, 37, 0.2); display: flex; align-items: center; }
         
         /* 状态页/错误页 */
         .loading { position: fixed; inset:0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 200; color: var(--sub); text-align: center; padding: 20px;}
         .empty-state { font-size: 14px; color: var(--sub); margin-top: 10px; line-height: 1.6; }
-        .err { color: var(--warn); background: rgba(239, 68, 68, 0.1); padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 12px; max-width: 90%; display: none; word-break: break-all; font-family: ui-monospace, monospace; }
+        .err { color: var(--warn); background: rgba(255, 69, 58, 0.1); padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 12px; max-width: 90%; display: none; word-break: break-all; font-family: monospace; }
     </style>
 </head>
 <body>
@@ -207,19 +195,19 @@
 
 <div class="m-mask" onclick="closeM()"></div>
 <div class="modal" id="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <span id="mCoord" style="background:var(--sub);color:#fff;padding:4px 10px;border-radius:6px;font-weight:bold;font-size:14px;box-shadow:0 2px 4px rgba(0,0,0,0.1)">-</span>
-        <span onclick="closeM()" style="font-size:28px;color:var(--sub);cursor:pointer;line-height:20px;padding:5px;">&times;</span>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <span id="mCoord" style="background:var(--sub);color:#fff;padding:4px 10px;border-radius:6px;font-weight:bold;font-size:14px">-</span>
+        <span onclick="closeM()" style="font-size:28px;color:var(--sub);cursor:pointer;line-height:20px">&times;</span>
     </div>
-    <h3 id="mName" style="margin:0 0 4px 0; font-size:20px; line-height:1.3; font-weight:700">-</h3>
-    <div id="mType" style="color:var(--sub); font-size:14px; margin-bottom:20px; font-weight:500">-</div>
+    <h3 id="mName" style="margin:0 0 4px 0; font-size:18px; line-height:1.3">-</h3>
+    <div id="mType" style="color:var(--sub); font-size:13px; margin-bottom:16px">-</div>
     <div id="mWarn" class="warn-box" style="display:none"></div>
     <div class="row"><span class="lbl" id="l_st">St</span><span class="val" id="mStatus">-</span></div>
     <div class="row"><span class="lbl" id="l_op">Op</span><span class="val" id="mOp">-</span></div>
     <div class="row"><span class="lbl" id="l_dt">Dt</span><span class="val" id="mDate">-</span></div>
     <div class="row"><span class="lbl" id="l_vl">Vol</span><span class="val" id="mVol">-</span></div>
-    <div id="mTags" style="margin-top:20px; display:flex; flex-wrap:wrap; gap:8px"></div>
-    <div id="mDesc" style="margin-top:20px; background:var(--bg); padding:16px; border-radius:10px; font-size:14px; color:var(--text); display:none; border:1px solid var(--border); line-height: 1.6;"></div>
+    <div id="mTags" style="margin-top:15px; display:flex; flex-wrap:wrap; gap:5px"></div>
+    <div id="mDesc" style="margin-top:15px; background:rgba(128,128,128,0.08); padding:12px; border-radius:8px; font-size:13px; color:var(--text); display:none; border:1px solid var(--border); line-height: 1.5;"></div>
 </div>
 
 <script>
@@ -236,7 +224,7 @@
     window.onload = async function() {
         try {
             const h = window.location.hash.substring(1);
-            if(!h) return; 
+            if(!h) return; // 无数据停留欢迎页
             
             // Base64 处理
             let b64 = h.replace(/-/g, '+').replace(/_/g, '/');
@@ -245,7 +233,7 @@
             const buf = new Uint8Array(bin.length);
             for(let i=0; i<bin.length; i++) buf[i]=bin.charCodeAt(i);
 
-            // 解压
+            // 解压 (支持 fflate 或 原生 DecompressionStream)
             let json;
             try {
                 if(window.fflate) {
@@ -260,20 +248,25 @@
 
             DATA = JSON.parse(json);
             
-            // 数据解析 V16-V18
+            // 数据解析
             if(DATA.v >= 9) {
-                if(DATA.d) DB = DATA.d;
-                else if(DATA.boxes) DB = DATA.boxes;
+                // V16-V18 结构处理
+                // DB数据源
+                if(DATA.d) DB = DATA.d;         // 新版
+                else if(DATA.boxes) DB = DATA.boxes; // 旧版 V16
                 else DB = DATA.db || [];
                 
+                // 配置提取
                 if(DATA.c) {
                     UI = DATA.c.ui || {};
                     CL = DATA.c.colors || { types:{}, st:{} };
                 } else {
+                    // 旧版回退
                     UI = { title:"CryoMaster", search:"Search", legend:"Legend", fields:{st:"Status"}, st_txt:{} };
                     CL = { types: DATA.types || {}, st: {} };
                 }
                 
+                // 默认UI文案
                 if(!UI.title) UI.title = "CryoMaster";
                 if(!UI.fields) UI.fields = {st:"Status", op:"Op", dt:"Date", vol:"Vol", warn:"Warning"};
                 
@@ -310,6 +303,7 @@
         
         const tree = { _boxes: [], _folders: {} };
         DB.forEach(box => {
+            // box.c 是分类路径 (e.g. "A/B")
             const parts = (box.c || "Uncategorized").split('/').filter(p => p.trim() !== "");
             let current = tree;
             parts.forEach(p => {
@@ -320,11 +314,12 @@
         });
 
         function buildNode(node, container, depth=0) {
+            // 先渲染文件夹
             for (const [name, subNode] of Object.entries(node._folders)) {
                 const folderDiv = document.createElement('div');
                 const titleDiv = document.createElement('div');
                 titleDiv.className = "folder-row expanded";
-                titleDiv.style.paddingLeft = `${depth * 12 + 20}px`;
+                titleDiv.style.paddingLeft = `${depth * 12 + 16}px`;
                 titleDiv.innerHTML = `<span class="folder-icon">▶</span> 📂 ${name}`;
                 
                 const contentDiv = document.createElement('div');
@@ -341,10 +336,11 @@
                 container.appendChild(folderDiv);
                 buildNode(subNode, contentDiv, depth+1);
             }
+            // 再渲染盒子
             node._boxes.forEach(b => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = "box-row";
-                itemDiv.style.paddingLeft = `${depth * 12 + 28}px`;
+                itemDiv.style.paddingLeft = `${depth * 12 + 24}px`;
                 itemDiv.id = `btn-${b.id}`;
                 itemDiv.innerHTML = `<div class="b-n"><span class="b-icon">📦</span> ${b.n}</div><div class="b-p">${b.p}%</div>`;
                 itemDiv.onclick = (e) => { 
@@ -358,6 +354,7 @@
         buildNode(tree, root);
     }
 
+    // 搜索功能
     document.getElementById('search').addEventListener('input', e => {
         const k = e.target.value.toLowerCase().trim();
         const allBoxes = document.querySelectorAll('.box-row');
@@ -369,14 +366,18 @@
             return;
         }
         
+        // 隐藏所有
         allBoxes.forEach(el => el.style.display = 'none');
         allFolders.forEach(el => el.style.display = 'none');
 
+        // 筛选逻辑
         DB.forEach(b => {
+            // 匹配盒子名称
             if(b.n.toLowerCase().includes(k)) {
                 const btn = document.getElementById(`btn-${b.id}`);
                 if(btn) {
                     btn.style.display = 'flex';
+                    // 递归展开父级
                     let parent = btn.parentElement; 
                     while(parent && parent.id !== 'treeRoot') {
                         if(parent.classList.contains('folder-cnt')) {
@@ -392,6 +393,7 @@
             }
         });
         
+        // 同时也对当前网格内数据高亮
         document.querySelectorAll('.cell').forEach(el => {
             if(el.classList.contains('empty')) return;
             el.classList.remove('dim','hi');
@@ -404,6 +406,7 @@
         const d = document.getElementById('legend');
         d.innerHTML = `<div class="leg-title">${UI.legend || "Legend"}</div>`;
         
+        // 渲染状态颜色
         let html = `<div class="leg-grid">`;
         if(CL.st) {
             const stMap = UI.st_txt || {0:"In Stock", 1:"Removed", 2:"Discarded"};
@@ -411,6 +414,7 @@
                 html += `<div class="leg-item"><div class="dot" style="background:${CL.st[k]}"></div>${stMap[k]||k}</div>`;
             }
         }
+        // 渲染类型颜色
         if(CL.types) {
             for(let [k,v] of Object.entries(CL.types)) {
                 html += `<div class="leg-item"><div class="dot" style="background:${v}"></div>${k}</div>`;
@@ -431,18 +435,23 @@
         curBox = DB.find(b => b.id === bid);
         if(!curBox) return;
         
+        // 激活状态
         document.querySelectorAll('.box-row').forEach(e => e.classList.remove('active'));
         const activeBtn = document.getElementById(`btn-${bid}`);
         if(activeBtn) activeBtn.classList.add('active');
         
         document.getElementById('vTitle').textContent = curBox.n;
         
+        // 构建 Map 方便查找
         const map = new Map();
         let lowList = [];
         
+        // V17/V18 数据结构映射
         // [r, c, name, type, st, feat, short, vol, vm, op, dt, desc, res, warn]
         curBox.d.forEach(item => {
             map.set(`${item[0]},${item[1]}`, item);
+            
+            // 警告统计 logic: st==0(在库), vm>0, vol/vm < 0.1
             const st = item[4], vol = item[7], vm = item[8];
             if(st === 0 && vm > 0 && (vol/vm) < 0.1) {
                 const coord = String.fromCharCode(65+item[0]) + (item[1]+1);
@@ -450,6 +459,7 @@
             }
         });
         
+        // 元数据和警告显示
         let metaTxt = (UI.meta_fmt || "{s} • {c} Items").replace("{s}", curBox.s).replace("{c}", curBox.d.length + "");
         let warnHtml = "";
         if(lowList.length > 0) {
@@ -459,6 +469,7 @@
         }
         document.getElementById('vMeta').innerHTML = metaTxt + warnHtml;
 
+        // 渲染网格
         let R=9, C=9;
         try { [R, C] = curBox.s.split('x').map(Number); } catch(e){}
         const grid = document.getElementById('grid');
@@ -466,6 +477,7 @@
         grid.style.gap = "var(--gap)";
         grid.innerHTML = '';
 
+        // 坐标轴
         grid.appendChild(createAxis("")); 
         for(let c=1; c<=C; c++) grid.appendChild(createAxis(c));
 
@@ -476,14 +488,20 @@
                 const item = map.get(`${r},${c}`);
                 
                 if(item) {
+                    // === 关键修复：数组解构顺序 ===
                     const [row, col, name, type, st, feat, short, vol, vm, op, dt, desc, res, warn] = item;
                     
                     el.className = `cell s-${st}`;
+                    // 颜色配置
+                    const stColor = (CL.st && CL.st[st]) ? CL.st[st] : null;
+                    if(stColor) el.style.backgroundColor = stColor;
                     
+                    // 圆环 (Volume Ring)
                     let ring = '';
                     if(vm > 0) {
                         let deg = (vol/vm)*360; 
                         if(isNaN(deg)) deg=0;
+                        // 如果在库且容量极低，圆环变红
                         let isCrit = (st===0 && (vol/vm)<0.1);
                         let rc = isCrit ? 'var(--warn)' : 'rgba(0,0,0,0.7)';
                         ring = `<div class="ring" style="background:conic-gradient(${rc} 0deg ${deg}deg, var(--ring-bg) ${deg}deg 360deg)"></div>`;
@@ -491,8 +509,12 @@
                         ring = `<div class="ring"></div>`; 
                     }
                     
-                    let typeColor = (CL.types && CL.types[type]) ? CL.types[type] : '#94A3B8';
+                    // 核心颜色
+                    let typeColor = (CL.types && CL.types[type]) ? CL.types[type] : '#888';
+                    // 显示文字：优先 short，否则 name
                     let txt = (short && short.trim()) ? short : name;
+                    
+                    // 警告标记
                     let warnTag = (st===0 && vm>0 && (vol/vm)<0.1) ? `<div class="warn">!</div>` : '';
                     
                     el.innerHTML = `
@@ -513,33 +535,40 @@
     }
 
     function showM(i, coord) {
+        // === 关键修复：弹窗数据映射 ===
         const [row, col, name, type, st, feat, short, vol, vm, op, dt, desc, res, warn] = i;
         
+        // 标题区
         document.getElementById('mCoord').textContent = coord;
-        document.getElementById('mCoord').style.backgroundColor = (CL.types && CL.types[type]) ? CL.types[type] : '#94A3B8';
+        document.getElementById('mCoord').style.backgroundColor = (CL.types && CL.types[type]) ? CL.types[type] : '#888';
         document.getElementById('mName').textContent = name;
         document.getElementById('mType').textContent = type + (short ? ` (${short})` : '');
         
+        // 警告区
         const wBox = document.getElementById('mWarn');
         if(st===0 && vm>0 && (vol/vm)<0.1) {
             wBox.style.display = 'flex';
             let label = UI.txt_low || "Low Volume";
-            wBox.innerHTML = `<div style="margin-right:12px;font-size:20px">⚠️</div><div><div style="font-weight:bold;margin-bottom:2px">${label}</div>${vol} / ${vm} µL</div>`;
+            wBox.innerHTML = `<div style="margin-right:10px;font-size:18px">⚠️</div><div><div style="font-weight:bold;margin-bottom:2px">${label}</div>${vol} / ${vm} µL</div>`;
         } else { wBox.style.display = 'none'; }
 
+        // 字段区
         const stEl = document.getElementById('mStatus');
         const stTxt = (UI.st_txt && UI.st_txt[st]) ? UI.st_txt[st] : (st===0?"In Stock":st===1?"Removed":"Discarded");
         stEl.textContent = stTxt;
-        stEl.style.color = (st===0?'var(--text)':(st===1?'var(--warn)':'var(--sub)'));
+        // 状态文字颜色
+        stEl.style.color = (st===0?'var(--text)':(st===1?'#E65100':'#C62828'));
         
         document.getElementById('mOp').textContent = op || '-';
         document.getElementById('mDate').textContent = dt || '-';
         document.getElementById('mVol').textContent = vm>0 ? `${vol} / ${vm} μL` : '-';
         
+        // 标签区 (Feature + Resistance)
         const tags = document.getElementById('mTags'); 
         tags.innerHTML = '';
         if(feat) tags.innerHTML += `<span class="tag" style="border-color:var(--primary);color:var(--primary);background:var(--primary-bg)">🧬 ${feat}</span>`;
         if(res) {
+            // 支持 JSON 格式抗性或普通逗号分隔
             if(res.startsWith('[')) {
                 try {
                     JSON.parse(res).forEach(r => tags.innerHTML+=`<span class="tag">💊 ${r.name}</span>`);
@@ -549,9 +578,11 @@
             }
         }
         
+        // 备注区
         const dBox = document.getElementById('mDesc');
         if(desc) { dBox.style.display='block'; dBox.textContent=desc; } else dBox.style.display='none';
         
+        // 显示
         document.querySelector('.m-mask').classList.add('show');
         document.querySelector('.modal').classList.add('show');
     }
