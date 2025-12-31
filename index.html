@@ -2,44 +2,45 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <meta name="color-scheme" content="light dark">
     <title>CryoMaster View</title>
     <script src="https://unpkg.com/fflate@0.8.0"></script>
     <style>
-        /* === 变量定义 (V26 极速性能版) === */
+        /* === 变量定义 (V27 旗舰画质回归版) === */
         :root {
+            /* 1. 环境氛围 (保留高级感) */
             --bg-gradient: linear-gradient(135deg, #F6F9FC 0%, #EBF1F5 100%);
             --card-bg: rgba(255, 255, 255, 0.75);
             --sidebar-bg: rgba(255, 255, 255, 0.85);
             
             --text: #1E293B; 
             --sub: #64748B;
-            --border: rgba(0, 0, 0, 0.08);
+            --border: rgba(0, 0, 0, 0.06);
             
             --primary: #3B82F6; 
             --primary-fade: rgba(59, 130, 246, 0.12); 
             --warn: #EF4444;
-            --hover: rgba(0, 0, 0, 0.03);
+            --hover: rgba(0, 0, 0, 0.04);
             
-            /* 孔位基础 */
-            --cell-size: 100px; 
-            --gap: 15px;
-            --cell-bd-width: 5px;
+            /* 2. 孔位基础 (默认值，可被滑块动态修改) */
+            --cell-size: 80px; /* 默认稍微大一点 */
+            --gap: 10px;
+            --cell-bd-width: 2px;
             --cell-bd-col: #CBD5E1; 
-            --cell-shadow: 0 2px 5px rgba(0,0,0,0.03);
-            --empty-shadow: inset 0 1px 3px rgba(0,0,0,0.06);
-            --empty-bg: rgba(0,0,0,0.03);
+            
+            /* 3. 质感特效 (凹凸质感) */
+            --cell-shadow: 0 4px 10px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.02);
+            --empty-shadow: inset 0 2px 5px rgba(0,0,0,0.06); /* 凹陷 */
+            --empty-bg: rgba(0,0,0,0.03); 
             
             --ring-bg: rgba(0,0,0,0.08);
             
-            /* 状态色 */
-            --st-0: #E8F5E9; 
-            --st-1: #FFF3E0; 
-            --st-2: #FFEBEE;
+            /* 4. 状态颜色 */
+            --st-0: #E8F5E9; --st-1: #FFF3E0; --st-2: #FFEBEE;
             
-            --shadow: 0 1px 3px rgba(0,0,0,0.05);
-            --glow: rgba(59, 130, 246, 0.15);
+            --shadow: 0 4px 20px rgba(0,0,0,0.08);
+            --glow: rgba(59, 130, 246, 0.2);
             --axis-col: #64748B;
         }
 
@@ -50,20 +51,20 @@
                 --sidebar-bg: rgba(15, 23, 42, 0.80);
                 --text: #F1F5F9; 
                 --sub: #94A3B8;
-                --border: rgba(255, 255, 255, 0.1);
+                --border: rgba(255, 255, 255, 0.08);
                 --primary: #60A5FA; 
                 --primary-fade: rgba(96, 165, 250, 0.2);
                 --warn: #F87171;
                 --hover: rgba(255, 255, 255, 0.05);
                 
                 --cell-bd-col: #475569;
-                --cell-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                --empty-shadow: inset 0 1px 3px rgba(0,0,0,0.3); 
+                --cell-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                --empty-shadow: inset 0 2px 5px rgba(0,0,0,0.4);
                 --empty-bg: rgba(255,255,255,0.03); 
 
                 --ring-bg: rgba(255,255,255,0.15);
                 --shadow: none;
-                --glow: rgba(96, 165, 250, 0.1);
+                --glow: rgba(96, 165, 250, 0.15);
                 --axis-col: #94A3B8;
             }
             .search-inp { background: rgba(0,0,0,0.3) !important; color: #FFF !important; border-color: var(--border) !important;}
@@ -83,7 +84,7 @@
             overflow: hidden; 
         }
 
-        /* PC端侧边栏 (保持高级感) */
+        /* 侧边栏 (高级毛玻璃) */
         .sidebar { 
             width: 300px; 
             background: var(--sidebar-bg); 
@@ -91,11 +92,10 @@
             border-right: 1px solid var(--border); 
             display: flex; flex-direction: column; 
             z-index: 20; flex-shrink: 0; 
-            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
             box-shadow: 5px 0 30px rgba(0,0,0,0.05);
-            overflow: hidden; white-space: nowrap;
         }
-        body.pc-collapsed .sidebar { width: 0; border-right: none; }
+        body.pc-collapsed .sidebar { width: 0; border-right: none; overflow: hidden; }
         
         .search-box { padding: 20px; border-bottom: 1px solid var(--border); }
         .search-inp { 
@@ -144,7 +144,6 @@
 
         .main { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; overflow: hidden; }
         
-        /* 顶部栏 */
         .header { 
             padding: 0 20px;
             background: var(--card-bg); 
@@ -167,22 +166,19 @@
         .h-sub { font-size: 12px; color: var(--sub); margin-top: 2px; display: flex; align-items: center; }
         .header-warn { color: var(--warn); font-weight: 700; margin-left: 8px; font-size: 11px; display: flex; align-items: center; background: rgba(239,68,68,0.1); padding: 2px 8px; border-radius: 20px; }
 
-        /* === [重要优化] 滚动视口 === */
+        /* === 滚动视口 === */
         .grid-vp { 
             flex: 1; 
-            overflow: auto; /* 允许滚动 */
+            overflow: auto; /* 允许双向滚动 */
             padding: 40px; 
             display: flex; 
-            /* PC端居中，移动端靠左以允许横向滚动 */
+            /* PC居中，移动端靠左以允许拖动查看大图 */
             justify-content: center; 
             align-items: flex-start; 
             cursor: grab; 
             position: relative;
-            
-            /* 启用 iOS 原生惯性滚动 */
             -webkit-overflow-scrolling: touch; 
-            /* 告知浏览器此区域处理触摸动作，提高流畅度 */
-            touch-action: pan-x pan-y; 
+            touch-action: pan-x pan-y;
         }
         .grid-vp.active { cursor: grabbing; }
         
@@ -190,14 +186,14 @@
         .grid { 
             display: grid; padding: 24px; 
             background: var(--card-bg); 
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
             border-radius: 20px; 
             border: 1px solid var(--border);
-            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.1);
+            box-shadow: var(--shadow);
             margin-bottom: 60px; 
             position: relative;
-            /* 防止 flex 容器挤压网格，确保能滚动 */
-            flex-shrink: 0; 
+            flex-shrink: 0; /* 禁止被压缩，确保大图能滚动 */
+            transition: gap 0.2s; /* 缩放时的平滑过渡 */
         }
         .grid::before {
             content: ""; position: absolute; inset: -20px; z-index: -1;
@@ -207,16 +203,18 @@
         
         .axis { 
             display: flex; align-items: center; justify-content: center; 
-            font-size: 12px; font-weight: 700; 
+            /* [优化] 坐标轴字号随格子变化 */
+            font-size: calc(var(--cell-size) * 0.25); 
+            font-weight: 700; 
             color: var(--axis-col); 
             opacity: 0.8; 
             user-select: none; font-family: ui-monospace, monospace;
         }
 
-        /* 盒子样式 (PC端带阴影) */
+        /* === 盒子孔位 (V25 质感) === */
         .cell { 
             width: var(--cell-size); height: var(--cell-size); 
-            border-radius: 12px; 
+            border-radius: calc(var(--cell-size) * 0.2); /* 圆角随尺寸变化 */
             background: #FFF; 
             border: var(--cell-bd-width) solid var(--cell-bd-col); 
             position: relative; cursor: pointer; 
@@ -233,7 +231,7 @@
         .cell:hover { transform: scale(1.05); z-index: 5; border-color: var(--primary) !important; }
         .cell:active { transform: scale(0.95); }
         
-        /* 凹槽空孔位 */
+        /* 凹槽空位 */
         .cell.empty { 
             border: none; 
             background: var(--empty-bg); 
@@ -242,28 +240,45 @@
         }
 
         .ring { position: absolute; inset: 4px; border-radius: 50%; z-index: 1; background: var(--ring-bg); }
-        .core { position: absolute; inset: 8px; border-radius: 50%; background: #94A3B8; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
-        .t-main { font-size: 11px; font-weight: 700; max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 2px; letter-spacing: -0.3px;}
-        .t-sub { font-size: 9px; opacity: 0.95; font-weight: 600; margin-top: 1px; max-width: 85%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; transform: scale(0.9);}
+        .core { position: absolute; inset: 12%; /* 使用百分比适配缩放 */ border-radius: 50%; background: #94A3B8; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
         
-        .warn { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; background: var(--warn); border: 3px solid #FFF; border-radius: 50%; z-index: 5; color: #fff; font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        /* [优化] 字体大小自适应 */
+        .t-main { font-size: calc(var(--cell-size) * 0.2); font-weight: 700; max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 2px; letter-spacing: -0.3px;}
+        .t-sub { font-size: calc(var(--cell-size) * 0.14); opacity: 0.95; font-weight: 600; margin-top: 1px; max-width: 85%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; transform: scale(0.9);}
+        
+        .warn { position: absolute; top: -6px; right: -6px; width: 25%; height: 25%; background: var(--warn); border: 2px solid #FFF; border-radius: 50%; z-index: 5; color: #fff; font-size: calc(var(--cell-size) * 0.18); font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         
         .cell.dim { opacity: 0.15; filter: grayscale(100%); }
         .cell.hi { transform: scale(1.15); z-index: 10; border-color: var(--primary) !important; box-shadow: 0 0 0 3px var(--primary-fade); }
 
-        /* === [核心优化] 移动端极速模式 (Max Width 768px) === */
+        /* === [新增] 缩放控制条 === */
+        .zoom-ctrl {
+            position: fixed; bottom: 20px; right: 20px;
+            background: var(--card-bg);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--border);
+            padding: 10px 15px; border-radius: 30px;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            z-index: 800; /* 低于遮罩层 */
+            transition: opacity 0.3s;
+        }
+        .zoom-ctrl label { font-size: 14px; color: var(--sub); }
+        .zoom-slider {
+            -webkit-appearance: none; width: 200px; height: 4px; background: var(--border); border-radius: 2px; outline: none;
+        }
+        .zoom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 18px; height: 18px; background: var(--primary); border-radius: 50%; cursor: pointer; border: 2px solid #FFF; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* 移动端适配 */
         @media (max-width: 768px) {
-            /* 1. 侧边栏：抽屉模式 */
             .sidebar { 
                 position: fixed; top: 0; left: 0; bottom: 0;
                 transform: translateX(-100%); 
                 width: 85%; max-width: 320px; 
                 box-shadow: 10px 0 30px rgba(0,0,0,0.2); 
                 border-right: none; z-index: 1000;
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                /* 移动端禁用毛玻璃，改用纯色背景提升性能 */
-                backdrop-filter: none; -webkit-backdrop-filter: none;
-                background: var(--card); /* 使用不透明背景 */
             }
             .sidebar.show { transform: translateX(0); }
             body.pc-collapsed .sidebar { width: 85%; } 
@@ -271,55 +286,29 @@
             .overlay { 
                 display: none; position: fixed; inset:0; 
                 background: rgba(0,0,0,0.4); z-index: 900;
-                /* 移除移动端遮罩的毛玻璃 */
-                backdrop-filter: none; 
+                backdrop-filter: blur(2px); 
             }
             .overlay.show { display: block; }
             
-            /* 2. 滚动区域优化 */
+            /* [重要] 移动端对齐方式：靠左，允许滑动 */
             .grid-vp { 
-                padding: 10px; 
-                /* 靠左对齐，确保右侧内容可以通过滚动看到 */
-                justify-content: flex-start; 
-                /* 强制 GPU 加速 */
-                will-change: transform;
+                padding: 15px; 
+                justify-content: flex-start; /* 允许左侧开始 */
+                align-items: flex-start;
             }
             
-            /* 3. 网格性能降级 */
-            .grid { 
-                padding: 10px; border-radius: 12px; 
-                /* 移除昂贵的特效 */
-                backdrop-filter: none; 
-                box-shadow: none; 
-                border: 1px solid var(--border);
-                background: var(--card); /* 纯色 */
-            }
-            .grid::before { display: none; } /* 移除光晕 */
-
-            :root { --cell-size: 42px; --gap: 4px; }
-            
-            /* 4. 盒子性能降级 (扁平化) */
-            .cell {
-                border-radius: 6px;
-                box-shadow: none !important; /* 强制移除阴影 */
-                transition: none; /* 移除过渡动画，滑动更跟手 */
-            }
-            .cell.empty {
-                background: rgba(0,0,0,0.02);
-                box-shadow: none; /* 移除凹槽阴影 */
-                border: 1px solid rgba(0,0,0,0.05); /* 改为极淡的边框 */
-            }
-            .core { box-shadow: none; inset: 4px; }
-            .ring { inset: 1px; } /* 简化圆环 */
-            .warn { box-shadow: none; border-width: 2px; }
-
-            .t-main { font-size: 10px; } .t-sub { display: none; }
+            /* 顶部栏 */
             .h-tit { max-width: 180px; font-size: 18px; }
             
-            /* 顶部栏降级 */
-            .header { backdrop-filter: none; background: var(--card); }
+            /* 缩放条在移动端居中显示 */
+            .zoom-ctrl {
+                bottom: 30px; left: 50%; right: auto; 
+                transform: translateX(-50%);
+                width: auto;
+            }
         }
 
+        /* 弹窗 */
         .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.3); z-index: 99; display: none; backdrop-filter: blur(5px); }
         .m-mask.show { display: block; }
         .modal { 
@@ -374,6 +363,13 @@
         </div>
     </div>
     <div class="grid-vp" id="vp"><div class="grid" id="grid"></div></div>
+    
+    <div class="zoom-ctrl" id="zoomCtrl">
+        <span style="font-size:16px;">🔍</span>
+        <span style="font-size:12px;color:var(--sub);cursor:pointer" onclick="changeZoom(-5)">－</span>
+        <input type="range" class="zoom-slider" id="zoomSlider" min="30" max="120" value="60" oninput="onZoomChange(this.value)">
+        <span style="font-size:12px;color:var(--sub);cursor:pointer" onclick="changeZoom(5)">＋</span>
+    </div>
 </div>
 
 <div class="m-mask" onclick="closeM()"></div>
@@ -398,7 +394,7 @@
     const vp = document.getElementById('vp');
     let isDown=false, sX, sY, sL, sT;
     
-    // PC端鼠标拖拽 (仅非触摸屏启用)
+    // PC端拖拽 (触摸屏禁用，以免与原生滚动冲突)
     if (window.matchMedia("(hover: hover)").matches) {
         vp.addEventListener('mousedown', e => { isDown=true; vp.classList.add('active'); sX=e.pageX-vp.offsetLeft; sY=e.pageY-vp.offsetTop; sL=vp.scrollLeft; sT=vp.scrollTop; });
         vp.addEventListener('mouseleave', () => { isDown=false; vp.classList.remove('active'); });
@@ -406,39 +402,48 @@
         vp.addEventListener('mousemove', e => { if(!isDown)return; e.preventDefault(); const x=e.pageX-vp.offsetLeft; const y=e.pageY-vp.offsetTop; vp.scrollLeft=sL-(x-sX)*1.5; vp.scrollTop=sT-(y-sY)*1.5; });
     }
 
-    // 移动端手势滑动侧边栏
-    let touchStartX = 0;
-    let touchEndX = 0;
+    // 移动端侧边栏滑动
+    let touchStartX = 0; let touchEndX = 0;
     const sidebarEl = document.getElementById('sidebar');
-    const SWIPE_THRESHOLD = 60; 
-    const EDGE_THRESHOLD = 50;  
+    const SWIPE_THRESHOLD = 60; const EDGE_THRESHOLD = 50;  
 
-    document.addEventListener('touchstart', e => {
-        touchStartX = e.changedTouches[0].screenX;
-    }, {passive: true});
-
-    document.addEventListener('touchend', e => {
-        touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-    }, {passive: true});
+    document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+    document.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, {passive: true});
 
     function handleSwipe() {
         if (window.innerWidth > 768) return;
         const swipeDistance = touchEndX - touchStartX;
         const isOpen = sidebarEl.classList.contains('show');
-        if (swipeDistance > SWIPE_THRESHOLD) {
-            if (touchStartX < EDGE_THRESHOLD && !isOpen) {
-                toggleMenu();
-            }
-        }
-        if (swipeDistance < -SWIPE_THRESHOLD) {
-            if (isOpen) {
-                toggleMenu();
-            }
-        }
+        if (swipeDistance > SWIPE_THRESHOLD && touchStartX < EDGE_THRESHOLD && !isOpen) toggleMenu();
+        if (swipeDistance < -SWIPE_THRESHOLD && isOpen) toggleMenu();
+    }
+
+    // === [新增] 缩放功能 ===
+    function onZoomChange(val) {
+        document.documentElement.style.setProperty('--cell-size', val + 'px');
+        // 保存用户偏好
+        try { localStorage.setItem('cm_zoom', val); } catch(e){}
+    }
+    
+    function changeZoom(delta) {
+        const slider = document.getElementById('zoomSlider');
+        let val = parseInt(slider.value) + delta;
+        if(val < 30) val = 30;
+        if(val > 120) val = 120;
+        slider.value = val;
+        onZoomChange(val);
     }
 
     window.onload = async function() {
+        // 读取缩放记忆
+        try {
+            const savedZoom = localStorage.getItem('cm_zoom');
+            if(savedZoom) {
+                document.getElementById('zoomSlider').value = savedZoom;
+                onZoomChange(savedZoom);
+            }
+        } catch(e){}
+
         try {
             const h = window.location.hash.substring(1);
             if(!h) return; 
@@ -646,7 +651,7 @@
         let R=9, C=9;
         try { [R, C] = curBox.s.split('x').map(Number); } catch(e){}
         const grid = document.getElementById('grid');
-        grid.style.gridTemplateColumns = `24px repeat(${C}, var(--cell-size))`;
+        grid.style.gridTemplateColumns = `calc(var(--cell-size)*0.4) repeat(${C}, var(--cell-size))`;
         grid.style.gap = "var(--gap)";
         grid.innerHTML = '';
 
