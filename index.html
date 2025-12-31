@@ -5,75 +5,113 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="color-scheme" content="light dark">
     <title>CryoMaster View</title>
-    <script src="https://unpkg.com/fflate@0.8.0"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fflate/0.8.0/fflate.min.js"></script>
+    <script>
+        // 备用方案：如果 cdnjs 加载失败，尝试 unpkg
+        if (!window.fflate) {
+            document.write('<script src="https://unpkg.com/fflate@0.8.0"><\/script>');
+        }
+    </script>
+
     <style>
+        /* === 变量定义 (自动适配深色模式) === */
         :root {
-            --bg: #F5F7FA; --card: #FFFFFF; --text: #333; --sub: #888;
-            --border: #E5E5EA; --primary: #007AFF; --primary-bg: rgba(0,122,255,0.1);
-            --warn: #D93025; --hover: #F2F2F7; --active-text: #007AFF;
-            --tree-line: #E5E5EA; --cell-size: 72px; --gap: 8px;
-            --cell-bg: #FFFFFF; --cell-bd: #EAEAEA; --ring-bg: rgba(0,0,0,0.06);
+            --bg: #F5F7FA; 
+            --card: #FFFFFF; 
+            --text: #333333; 
+            --sub: #888888;
+            --border: #E5E5EA;
+            --primary: #007AFF; 
+            --primary-bg: rgba(0, 122, 255, 0.1); 
+            --warn: #D93025;
+            
+            --hover: #F2F2F7;
+            --active-text: #007AFF;
+            
+            --cell-size: 72px; 
+            --gap: 8px;
+            --cell-bg: #FFFFFF;
+            --cell-bd: #EAEAEA;
+            --ring-bg: rgba(0,0,0,0.06);
+            
             --st-0: #1b5e20; --st-1: #e65100; --st-2: #b71c1c;
         }
+
         @media (prefers-color-scheme: dark) {
             :root {
-                --bg: #000000; --card: #1C1C1E; --text: #F0F0F0; --sub: #98989D;
-                --border: #38383A; --primary: #0A84FF; --primary-bg: rgba(10,132,255,0.15);
-                --warn: #FF453A; --hover: #2C2C2E; --active-text: #FFFFFF;
-                --tree-line: #38383A; --cell-bg: #2C2C2E; --cell-bd: #3A3A3C;
+                --bg: #000000; 
+                --card: #1C1C1E; 
+                --text: #F0F0F0; 
+                --sub: #98989D;
+                --border: #38383A;
+                --primary: #0A84FF; 
+                --primary-bg: rgba(10, 132, 255, 0.15);
+                --warn: #FF453A;
+                
+                --hover: #2C2C2E;
+                --active-text: #FFFFFF;
+                
+                --cell-bg: #2C2C2E;
+                --cell-bd: #3A3A3C;
                 --ring-bg: rgba(255,255,255,0.15);
             }
-            .cell.s-0 { background-color: rgba(48,209,88,0.15) !important; }
-            .cell.s-1 { background-color: rgba(255,159,10,0.15) !important; }
-            .cell.s-2 { background-color: rgba(255,69,58,0.15) !important; }
+            .cell.s-0 { background-color: rgba(48, 209, 88, 0.15) !important; }
+            .cell.s-1 { background-color: rgba(255, 159, 10, 0.15) !important; }
+            .cell.s-2 { background-color: rgba(255, 69, 58, 0.15) !important; }
+            
             .search-inp { background: #2C2C2E !important; color: #FFF !important; }
-            .warn-box { background: rgba(255,69,58,0.15) !important; border-color: rgba(255,69,58,0.3) !important; color: #FF453A !important; }
+            .warn-box { background: rgba(255, 69, 58, 0.15) !important; border-color: rgba(255, 69, 58, 0.3) !important; color: #FF453A !important; }
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; display: flex; overflow: hidden; }
 
+        /* 左侧边栏 */
         .sidebar { width: 320px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 20; flex-shrink: 0; transition: transform 0.3s; }
         .search-box { padding: 12px 16px; border-bottom: 1px solid var(--border); }
         .search-inp { width: 100%; padding: 8px 12px; border-radius: 8px; border: none; background: #F5F7FA; font-size: 14px; outline: none; transition: background 0.3s; }
+        .search-inp:focus { background: var(--hover); }
         .list-wrap { flex: 1; overflow-y: auto; padding: 10px 0; }
 
-        /* Tree Styles */
-        .folder-row { padding: 8px 16px; cursor: pointer; display: flex; align-items: center; font-size: 13px; font-weight: 600; color: var(--text); transition: 0.1s; }
+        /* 树形菜单样式 */
+        .folder-row { padding: 8px 16px; cursor: pointer; display: flex; align-items: center; font-size: 13px; font-weight: 600; color: var(--text); user-select: none; transition: background 0.1s; }
         .folder-row:hover { background: var(--hover); }
-        .folder-icon { margin-right: 6px; font-size: 12px; color: var(--sub); transition: transform 0.2s; display: inline-block; width: 14px; text-align: center; }
+        .folder-icon { margin-right: 6px; font-size: 12px; color: var(--sub); transition: transform 0.2s; display: inline-block; width: 14px; text-align: center;}
         .folder-row.expanded .folder-icon { transform: rotate(90deg); }
         
-        .box-row { padding: 8px 16px 8px 0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--text); margin: 1px 8px; border-radius: 6px; transition: 0.1s; border: 1px solid transparent; }
+        .box-row { padding: 8px 16px 8px 0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--text); margin: 1px 8px; border-radius: 6px; transition: all 0.1s; border: 1px solid transparent; }
         .box-row:hover { background: var(--hover); }
         .box-row.active { background: var(--primary-bg); color: var(--active-text); border-color: var(--primary-bg); font-weight: 600; }
         .box-row.active .b-n, .box-row.active .b-p { color: var(--primary); }
         .b-n { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 170px; display: flex; align-items: center; }
         .b-icon { margin-right: 6px; font-size: 14px; }
         .b-p { font-size: 12px; opacity: 0.6; margin-left: 8px; }
-        .folder-cnt { display: none; } .folder-cnt.open { display: block; }
+        .folder-cnt { display: none; }
+        .folder-cnt.open { display: block; }
 
-        /* Legend */
+        /* 图例 */
         .legend { padding: 16px; background: var(--card); border-top: 1px solid var(--border); min-height: 100px; max-height: 200px; overflow-y: auto; }
         .leg-title { font-size: 12px; font-weight: bold; color: var(--sub); margin-bottom: 8px; text-transform: uppercase; }
         .leg-grid { display: flex; flex-wrap: wrap; gap: 8px; }
         .leg-item { display: flex; align-items: center; font-size: 12px; color: var(--sub); width: 48%; }
         .dot, .dot-st { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
 
-        /* Main Area */
+        /* 主区域 */
         .main { flex: 1; display: flex; flex-direction: column; position: relative; }
-        .header { padding: 15px 25px; background: var(--card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; z-index: 10; height: 70px; }
+        .header { padding: 15px 25px; background: var(--card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); z-index: 10; height: 70px;}
         .h-tit { font-size: 18px; font-weight: 700; color: var(--text); }
         .h-sub { font-size: 13px; color: var(--sub); margin-top: 4px; display: flex; align-items: center; flex-wrap: wrap; }
-        .header-warn { color: var(--warn); font-weight: 700; margin-left: 10px; font-size: 13px; }
+        .header-warn { color: var(--warn); font-weight: 700; margin-left: 10px; font-size: 13px; display: flex; align-items: center; }
         .menu-btn { display: none; font-size: 24px; margin-right: 15px; cursor: pointer; color: var(--text); }
 
+        /* 网格 */
         .grid-vp { flex: 1; overflow: auto; padding: 30px; display: flex; justify-content: center; align-items: flex-start; cursor: grab; background: var(--bg); }
         .grid-vp.active { cursor: grabbing; }
         .grid { display: grid; padding: 20px; background: var(--card); border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); margin-bottom: 60px; }
         .axis { display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--sub); opacity: 0.6; user-select: none; }
 
-        /* Cells */
+        /* 细胞 */
         .cell { width: var(--cell-size); height: var(--cell-size); border-radius: 10px; background: var(--cell-bg); border: 1px solid var(--cell-bd); position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
         .cell:active { transform: scale(0.95); }
         .cell.empty { border: 1px dashed var(--sub); opacity: 0.15; background: transparent; pointer-events: none; }
@@ -85,6 +123,7 @@
         .cell.dim { opacity: 0.1; filter: grayscale(100%); }
         .cell.hi { transform: scale(1.15); z-index: 10; box-shadow: 0 0 0 3px var(--primary); border-color: var(--primary); }
 
+        /* 移动端 */
         @media (max-width: 768px) {
             .sidebar { position: absolute; height: 100%; transform: translateX(-100%); width: 85%; box-shadow: 10px 0 30px rgba(0,0,0,0.3); }
             .sidebar.show { transform: translateX(0); }
@@ -95,6 +134,7 @@
             :root { --cell-size: 48px; --gap: 6px; }
         }
 
+        /* 弹窗 */
         .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.5); z-index: 99; display: none; backdrop-filter: blur(2px); }
         .m-mask.show { display: block; }
         .modal { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); border-radius: 20px 20px 0 0; padding: 25px; z-index: 100; transform: translateY(100%); transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.3); color: var(--text); border-top: 1px solid var(--border); }
@@ -104,7 +144,7 @@
         .tag { background: rgba(128,128,128,0.1); padding: 3px 8px; border-radius: 6px; font-size: 12px; margin-right: 5px; color: var(--text); border: 1px solid var(--border); }
         .warn-box { margin-top: 15px; background: #FFF5F5; padding: 12px; border-radius: 8px; font-size: 13px; color: var(--warn); border: 1px solid rgba(217, 48, 37, 0.3); display: flex; align-items: flex-start; }
         
-        /* 状态屏 */
+        /* 状态页/错误页 */
         .loading { position: fixed; inset:0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 200; color: var(--sub); text-align: center; padding: 20px;}
         .empty-state { font-size: 16px; color: var(--sub); margin-top: 10px; line-height: 1.5; }
         .err { color: var(--warn); background: rgba(255, 69, 58, 0.1); padding: 10px; border-radius: 8px; margin-top: 20px; font-size: 12px; max-width: 80%; display: none; word-break: break-all; }
@@ -168,21 +208,19 @@
     window.onload = async function() {
         try {
             const h = window.location.hash.substring(1);
-            // 1. 如果没有 Hash，显示欢迎页，而不是报错
             if(!h) {
-                document.getElementById('statusTitle').textContent = "CryoMaster View";
-                document.getElementById('statusDesc').innerHTML = "No data loaded.<br>Please scan the QR code from the software.";
-                return; // 停留在加载页
+                // 没有 Hash 数据时，显示欢迎界面，而不是报错
+                return; 
             }
             
-            // 2. Base64 预处理
+            // Base64 处理
             let b64 = h.replace(/-/g, '+').replace(/_/g, '/');
             while(b64.length % 4) b64 += '=';
             const bin = atob(b64);
             const buf = new Uint8Array(bin.length);
             for(let i=0; i<bin.length; i++) buf[i]=bin.charCodeAt(i);
 
-            // 3. 解压 (fflate)
+            // 解压
             let json;
             try {
                 if(window.fflate) {
@@ -192,18 +230,26 @@
                     const ds = new DecompressionStream('gzip');
                     const w = new Blob([buf]).stream().pipeThrough(ds);
                     json = await new Response(w).text();
-                } else { throw "Browser unsupported"; }
-            } catch(e) { 
-                // 兼容非压缩数据
-                json = decodeURIComponent(escape(atob(b64))); 
-            }
+                } else { throw "Browser unsupported or Lib load failed"; }
+            } catch(e) { json = decodeURIComponent(escape(atob(b64))); }
 
             DATA = JSON.parse(json);
             
             if(DATA.v >= 9) {
-                DB = DATA.d || DATA.db; 
-                UI = DATA.c.ui || DATA.cfg.ui; 
-                CL = DATA.c.colors || DATA.cfg.colors;
+                if(DATA.boxes) {
+                    DB = DATA.boxes;
+                    CL = { types: DATA.types, st: {} }; 
+                } else {
+                    DB = DATA.d || DATA.db; 
+                }
+                
+                UI = DATA.c ? DATA.c.ui : {
+                    title: "CryoMaster", search: "Search", legend: "Legend",
+                    st_txt: {0:"In Stock", 1:"Removed", 2:"Discarded"},
+                    fields: {st:"Status", op:"Op", dt:"Date", vol:"Vol"}
+                };
+                
+                if(!CL.st) CL.st = { 0: "#E8F5E9", 1: "#FFF3E0", 2: "#FFEBEE" };
                 
                 setupUI();
                 renderTree();
@@ -211,14 +257,14 @@
                 if(DB.length > 0) loadBox(DB[0].id);
                 document.getElementById('loading').style.display = 'none';
             } else {
-                throw "Version mismatch (Require V9+).";
+                throw "Version mismatch.";
             }
         } catch(e) {
             document.getElementById('statusIcon').textContent = "⚠️";
             document.getElementById('statusTitle').textContent = "Load Failed";
             document.getElementById('statusDesc').style.display = 'none';
             document.getElementById('err').style.display='block';
-            document.getElementById('err').textContent = e.toString();
+            document.getElementById('err').textContent = e.toString() + "\n(Check network or link)";
         }
     };
 
@@ -231,7 +277,6 @@
         document.getElementById('l_vl').textContent = UI.fields.vol;
     }
 
-    // === Tree Render ===
     function renderTree() {
         const root = document.getElementById('treeRoot');
         root.innerHTML = '';
@@ -256,16 +301,8 @@
                 titleDiv.innerHTML = `<span class="folder-icon">▶</span> 📂 ${name}`;
                 const contentDiv = document.createElement('div');
                 contentDiv.className = "folder-cnt";
-                
-                titleDiv.onclick = (e) => {
-                    e.stopPropagation();
-                    titleDiv.classList.toggle('expanded');
-                    contentDiv.classList.toggle('open');
-                };
-                
-                folderDiv.appendChild(titleDiv);
-                folderDiv.appendChild(contentDiv);
-                container.appendChild(folderDiv);
+                titleDiv.onclick = (e) => { e.stopPropagation(); titleDiv.classList.toggle('expanded'); contentDiv.classList.toggle('open'); };
+                folderDiv.appendChild(titleDiv); folderDiv.appendChild(contentDiv); container.appendChild(folderDiv);
                 buildNode(subNode, contentDiv, depth+1);
             }
             node._boxes.forEach(b => {
@@ -274,11 +311,7 @@
                 itemDiv.style.paddingLeft = `${depth * 12 + 24}px`;
                 itemDiv.id = `btn-${b.id}`;
                 itemDiv.innerHTML = `<div class="b-n"><span class="b-icon">📦</span> ${b.n}</div><div class="b-p">${b.p}%</div>`;
-                itemDiv.onclick = (e) => {
-                    e.stopPropagation();
-                    loadBox(b.id);
-                    if(window.innerWidth < 768) toggleMenu();
-                };
+                itemDiv.onclick = (e) => { e.stopPropagation(); loadBox(b.id); if(window.innerWidth < 768) toggleMenu(); };
                 container.appendChild(itemDiv);
             });
         }
@@ -323,13 +356,10 @@
 
     function renderLegend() {
         const d = document.getElementById('legend');
+        if(!CL.types) return;
         d.innerHTML = `<div class="leg-title">${UI.legend}</div>`;
-        let html = `<div class="leg-grid" style="margin-bottom:12px">`;
-        html += `<div class="leg-item"><div class="dot-st" style="background:${CL.st[0]}"></div>${UI.st_txt[0]}</div>`;
-        html += `<div class="leg-item"><div class="dot-st" style="background:${CL.st[1]}"></div>${UI.st_txt[1]}</div>`;
-        html += `<div class="leg-item"><div class="dot-st" style="background:${CL.st[2]}"></div>${UI.st_txt[2]}</div>`;
-        html += `</div><div class="leg-grid">`;
-        if (CL.types) { for(let [k,v] of Object.entries(CL.types)) html += `<div class="leg-item"><div class="dot" style="background:${v}"></div>${k}</div>`; }
+        let html = `<div class="leg-grid">`;
+        for(let [k,v] of Object.entries(CL.types)) html += `<div class="leg-item"><div class="dot" style="background:${v}"></div>${k}</div>`;
         html += `</div>`;
         d.innerHTML += html;
     }
@@ -344,14 +374,17 @@
         if(activeBtn) activeBtn.classList.add('active');
         
         document.getElementById('vTitle').textContent = curBox.n;
+        
         let lowList = [];
         curBox.d.forEach(item => {
-            let st = item[4], v = item[7], m = item[8];
-            if(st === 0 && m > 0 && (v/m) < 0.1) {
+            // [V16] 数组结构: [r, c, name, type, st, feat, res, op, dt, desc, vol, vm, short]
+            let st = item[4], vol = item[10], vm = item[11];
+            if(st === 0 && vm > 0 && (vol/vm) < 0.1) {
                 let coord = String.fromCharCode(65+item[0]) + (item[1]+1);
                 lowList.push(coord);
             }
         });
+        
         const baseMeta = UI.meta_fmt.replace("{s}", curBox.s).replace("{c}", curBox.d.length + "");
         let warnHtml = "";
         if(lowList.length > 0) {
@@ -380,24 +413,26 @@
                 const el = document.createElement('div');
                 const item = map.get(`${r},${c}`);
                 if(item) {
-                    const [row, col, name, type, st, feat, short, v, vm, op, dt, desc, res, wTxt] = item;
+                    const [row, col, name, type, st, feat, res, op, dt, desc, vol, vm, short] = item;
+                    
                     el.className = `cell s-${st}`;
-                    el.style.backgroundColor = CL.st[st] || '#FFF';
+                    // 默认浅色背景，深色由CSS接管
+                    el.style.backgroundColor = (CL.st && CL.st[st]) ? CL.st[st] : '#FFF';
                     
                     let ring = '';
                     if(vm > 0) {
-                        let deg = (v/vm)*360; if(isNaN(deg)) deg=0;
-                        let rc = (st===0 && (v/vm)<0.3) ? 'var(--warn)' : 'rgba(0,0,0,0.8)';
+                        let deg = (vol/vm)*360; if(isNaN(deg)) deg=0;
+                        let rc = (st===0 && (vol/vm)<0.3) ? 'var(--warn)' : 'rgba(0,0,0,0.8)';
                         ring = `<div class="ring" style="background:conic-gradient(${rc} 0deg ${deg}deg, var(--ring-bg) ${deg}deg 360deg)"></div>`;
                     } else { ring = `<div class="ring"></div>`; }
                     
                     let color = (CL.types && CL.types[type]) ? CL.types[type] : '#888';
                     let txt = (short && short.trim()) ? short : name;
-                    let warn = (wTxt || (st===0 && vm>0 && (v/vm)<0.1)) ? `<div class="warn">!</div>` : '';
+                    let warn = (st===0 && vm>0 && (vol/vm)<0.1) ? `<div class="warn">!</div>` : '';
                     
                     el.innerHTML = `${ring}${warn}<div class="core" style="background:${color}"><div class="t-main">${txt.substring(0,4)}</div>${feat?`<div class="t-sub">${feat.substring(0,5)}</div>`:''}</div>`;
                     el.onclick = () => showM(item, String.fromCharCode(65+r)+(c+1));
-                    el.dataset.txt = (name+short+type+feat+(wTxt||"")).toLowerCase();
+                    el.dataset.txt = (name+(short||"")+type+feat+(res||"")).toLowerCase();
                 } else { el.className = 'cell empty'; }
                 grid.appendChild(el);
             }
@@ -405,16 +440,16 @@
     }
 
     function showM(i, coord) {
-        const [r, c, name, type, st, feat, short, v, vm, op, dt, desc, res, wTxt] = i;
+        const [row, col, name, type, st, feat, res, op, dt, desc, vol, vm, short] = i;
         document.getElementById('mCoord').textContent = coord;
         document.getElementById('mCoord').style.backgroundColor = (CL.types && CL.types[type]) ? CL.types[type] : '#888';
         document.getElementById('mName').textContent = name;
         document.getElementById('mType').textContent = type + (short?` (${short})`:'');
         
         const wBox = document.getElementById('mWarn');
-        if(wTxt) {
+        if(st===0 && vm>0 && (vol/vm)<0.1) {
             wBox.style.display = 'flex';
-            wBox.innerHTML = `<div style="margin-right:8px;font-size:16px">⚠️</div><div><div style="font-weight:bold;margin-bottom:4px">${UI.fields.warn || 'Warning'}</div>${wTxt}</div>`;
+            wBox.innerHTML = `<div style="margin-right:8px;font-size:16px">⚠️</div><div><div style="font-weight:bold;margin-bottom:4px">Low Volume</div>${vol} / ${vm} µL</div>`;
         } else { wBox.style.display = 'none'; }
 
         const stEl = document.getElementById('mStatus');
@@ -423,12 +458,12 @@
         
         document.getElementById('mOp').textContent = op||'-';
         document.getElementById('mDate').textContent = dt||'-';
-        document.getElementById('mVol').textContent = vm>0 ? `${v} / ${vm} μL` : '-';
+        document.getElementById('mVol').textContent = vm>0 ? `${vol} / ${vm} μL` : '-';
         
         const tags = document.getElementById('mTags'); tags.innerHTML = '';
         if(feat) tags.innerHTML += `<span class="tag" style="border-color:var(--primary);color:var(--primary)">🧬 ${feat}</span>`;
         if(res) {
-            try { if(res.startsWith('[')) JSON.parse(res).forEach(x=>tags.innerHTML+=`<span class="tag">💊 ${x.name}</span>`); else tags.innerHTML+=`<span class="tag">💊 ${res}</span>`; } catch(e){ if(res) tags.innerHTML+=`<span class="tag">💊 ${res}</span>`; }
+            res.split(',').forEach(r => { if(r.trim()) tags.innerHTML+=`<span class="tag">💊 ${r}</span>`; });
         }
         const dBox = document.getElementById('mDesc');
         if(desc) { dBox.style.display='block'; dBox.textContent=desc; } else dBox.style.display='none';
