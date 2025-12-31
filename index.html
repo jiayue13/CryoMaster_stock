@@ -7,7 +7,7 @@
     <title>CryoMaster View</title>
     <script src="https://unpkg.com/fflate@0.8.0"></script>
     <style>
-        /* === 变量定义 (自动适配深色模式) === */
+        /* === 变量定义 (V19.2 轮廓增强版) === */
         :root {
             --bg: #F5F7FA; 
             --card: #FFFFFF; 
@@ -22,15 +22,18 @@
             --active-text: #007AFF;
             
             --cell-size: 64px; 
-            --gap: 8px;
+            --gap: 10px; /* 间距稍微拉大一点点，让轮廓不打架 */
             --cell-bg: #FFFFFF;
-            --cell-bd: #EAEAEA;
-            --ring-bg: rgba(0,0,0,0.06);
             
-            /* [修改] 坐标轴颜色：深色，不透明 */
+            /* [新增] 轮廓专用变量 */
+            --cell-bd-width: 2px;       /* 孔位边框加粗 */
+            --cell-bd-col: #CBD5E1;     /* 孔位边框颜色 (更明显) */
+            --grid-bd-col: #94A3B8;     /* 外框边框颜色 */
+            --cell-shadow: inset 0 2px 4px rgba(0,0,0,0.03); /* 轻微内阴影，增加深度 */
+
+            --ring-bg: rgba(0,0,0,0.06);
             --axis-col: #334155; 
             
-            /* 状态背景色默认值 */
             --st-0: #E8F5E9; --st-1: #FFF3E0; --st-2: #FFEBEE;
         }
 
@@ -49,13 +52,16 @@
                 --active-text: #FFFFFF;
                 
                 --cell-bg: #2C2C2E;
-                --cell-bd: #3A3A3C;
-                --ring-bg: rgba(255,255,255,0.15);
                 
-                /* [修改] Dark模式坐标轴：亮色 */
+                /* [新增] Dark模式轮廓 */
+                --cell-bd-col: #475569;   /* 深色模式下的边框 */
+                --grid-bd-col: #64748B;
+                --cell-shadow: inset 0 2px 4px rgba(0,0,0,0.2); 
+                
+                --ring-bg: rgba(255,255,255,0.15);
                 --axis-col: #CBD5E1;
             }
-            /* 深色模式下强制状态色变暗 */
+            
             .cell.s-0 { background-color: rgba(48, 209, 88, 0.15) !important; }
             .cell.s-1 { background-color: rgba(255, 159, 10, 0.15) !important; }
             .cell.s-2 { background-color: rgba(255, 69, 58, 0.15) !important; }
@@ -67,14 +73,12 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; height: 100vh; display: flex; overflow: hidden; }
 
-        /* 左侧边栏 */
         .sidebar { width: 300px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 20; flex-shrink: 0; transition: transform 0.3s; }
         .search-box { padding: 12px 16px; border-bottom: 1px solid var(--border); }
         .search-inp { width: 100%; padding: 8px 12px; border-radius: 8px; border: none; background: #F5F7FA; font-size: 14px; outline: none; transition: background 0.3s; }
         .search-inp:focus { background: var(--hover); }
         .list-wrap { flex: 1; overflow-y: auto; padding: 10px 0; }
 
-        /* 树形菜单样式 */
         .folder-row { padding: 10px 16px; cursor: pointer; display: flex; align-items: center; font-size: 14px; font-weight: 600; color: var(--text); transition: background 0.1s; }
         .folder-row:hover { background: var(--hover); }
         .folder-icon { margin-right: 8px; font-size: 12px; color: var(--sub); transition: transform 0.2s; display: inline-block; width: 16px; text-align: center;}
@@ -90,14 +94,12 @@
         .folder-cnt { display: none; }
         .folder-cnt.open { display: block; }
 
-        /* 图例 */
         .legend { padding: 16px; background: var(--card); border-top: 1px solid var(--border); min-height: 80px; max-height: 200px; overflow-y: auto; }
         .leg-title { font-size: 11px; font-weight: bold; color: var(--sub); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
         .leg-grid { display: flex; flex-wrap: wrap; gap: 8px; }
         .leg-item { display: flex; align-items: center; font-size: 12px; color: var(--sub); width: 48%; }
         .dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
 
-        /* 主区域 */
         .main { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; }
         .header { padding: 0 20px; background: var(--card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.03); z-index: 10; height: 60px; flex-shrink: 0;}
         .h-tit { font-size: 18px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;}
@@ -105,33 +107,56 @@
         .header-warn { color: var(--warn); font-weight: 700; margin-left: 10px; font-size: 12px; display: flex; align-items: center; background: rgba(217,48,37,0.08); padding: 2px 6px; border-radius: 4px; }
         .menu-btn { display: none; font-size: 20px; padding: 10px; margin-right: 5px; cursor: pointer; color: var(--text); }
 
-        /* 网格 */
         .grid-vp { flex: 1; overflow: auto; padding: 20px; display: flex; justify-content: center; align-items: flex-start; cursor: grab; background: var(--bg); position: relative; }
         .grid-vp.active { cursor: grabbing; }
-        .grid { display: grid; padding: 15px; background: var(--card); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 40px; }
         
-        /* [修改] 坐标轴样式增强 */
+        /* [修改] 外框：加粗边框，增加阴影层次 */
+        .grid { 
+            display: grid; padding: 20px; 
+            background: var(--card); 
+            border-radius: 16px; 
+            /* 2px实线边框 + 柔和的大阴影 */
+            border: 2px solid var(--grid-bd-col);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06); 
+            margin-bottom: 40px; 
+        }
+        
         .axis { 
             display: flex; align-items: center; justify-content: center; 
-            font-size: 13px; font-weight: 800; /* 加粗 */
-            color: var(--axis-col); /* 使用新变量 */
-            opacity: 1; /* 不透明 */
+            font-size: 13px; font-weight: 800; 
+            color: var(--axis-col); 
+            opacity: 1; 
             user-select: none;
         }
 
-        /* 细胞 */
-        .cell { width: var(--cell-size); height: var(--cell-size); border-radius: 8px; background: var(--cell-bg); border: 1px solid var(--cell-bd); position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
+        /* [修改] 孔位：加粗边框 + 内阴影 */
+        .cell { 
+            width: var(--cell-size); height: var(--cell-size); 
+            border-radius: 10px; 
+            background: var(--cell-bg); 
+            /* 核心修改：边框加粗，使用专用颜色 */
+            border: var(--cell-bd-width) solid var(--cell-bd-col); 
+            position: relative; 
+            cursor: pointer; 
+            display: flex; align-items: center; justify-content: center; 
+            transition: transform 0.1s; 
+            /* 核心修改：增加内阴影，增加厚度感 */
+            box-shadow: var(--cell-shadow);
+        }
+        
         .cell:active { transform: scale(0.95); }
-        .cell.empty { border: 1px dashed var(--border); opacity: 0.4; background: transparent; pointer-events: none; }
+        .cell.empty { border: 2px dashed var(--border); opacity: 0.4; background: transparent; pointer-events: none; box-shadow: none;}
+        
         .ring { position: absolute; inset: 3px; border-radius: 50%; z-index: 1; background: var(--ring-bg); }
         .core { position: absolute; inset: 7px; border-radius: 50%; background: #999; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .t-main { font-size: 11px; font-weight: 700; max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 2px; }
         .t-sub { font-size: 8px; opacity: 0.9; font-weight: 500; margin-top: 1px; max-width: 85%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
         .warn { position: absolute; top: -5px; right: -5px; width: 16px; height: 16px; background: var(--warn); border: 2px solid var(--card); border-radius: 50%; z-index: 5; color: #fff; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        
         .cell.dim { opacity: 0.15; filter: grayscale(100%); }
-        .cell.hi { transform: scale(1.1); z-index: 10; box-shadow: 0 0 0 2px var(--primary); border-color: var(--primary); }
+        /* 选中状态：边框变色且加粗 */
+        .cell.hi { transform: scale(1.1); z-index: 10; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
 
-        /* 移动端适配 */
         @media (max-width: 768px) {
             .sidebar { position: absolute; height: 100%; transform: translateX(-100%); width: 80%; max-width: 320px; box-shadow: 10px 0 30px rgba(0,0,0,0.2); }
             .sidebar.show { transform: translateX(0); }
@@ -145,7 +170,6 @@
             .h-tit { max-width: 160px; font-size: 16px; }
         }
 
-        /* 详情弹窗 */
         .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.5); z-index: 99; display: none; backdrop-filter: blur(2px); }
         .m-mask.show { display: block; }
         .modal { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); border-radius: 16px 16px 0 0; padding: 24px; z-index: 100; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 -5px 30px rgba(0,0,0,0.2); color: var(--text); border-top: 1px solid var(--border); max-height: 85vh; overflow-y: auto; }
@@ -155,7 +179,6 @@
         .tag { background: rgba(128,128,128,0.1); padding: 4px 8px; border-radius: 6px; font-size: 12px; margin-right: 6px; color: var(--text); border: 1px solid var(--border); display: inline-block; margin-bottom: 4px;}
         .warn-box { margin-bottom: 15px; background: #FFF5F5; padding: 10px; border-radius: 8px; font-size: 13px; color: var(--warn); border: 1px solid rgba(217, 48, 37, 0.2); display: flex; align-items: center; }
         
-        /* 状态页/错误页 */
         .loading { position: fixed; inset:0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 200; color: var(--sub); text-align: center; padding: 20px;}
         .empty-state { font-size: 14px; color: var(--sub); margin-top: 10px; line-height: 1.6; }
         .err { color: var(--warn); background: rgba(255, 69, 58, 0.1); padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 12px; max-width: 90%; display: none; word-break: break-all; font-family: monospace; }
