@@ -7,7 +7,7 @@
     <title>CryoMaster View</title>
     <script src="https://unpkg.com/fflate@0.8.0"></script>
     <style>
-        /* === 变量定义 (V23 移动端适配版) === */
+        /* === 变量定义 (V24 交互增强版) === */
         :root {
             /* 1. 环境氛围 */
             --bg-gradient: linear-gradient(135deg, #F6F9FC 0%, #EBF1F5 100%);
@@ -24,14 +24,14 @@
             --hover: rgba(0, 0, 0, 0.03);
             
             /* 2. 孔位基础 */
-            --cell-size: 64px; 
+            --cell-size: 80px; 
             --gap: 10px;
-            --cell-bd-width: 2px;
-            --cell-bd-col: #CBD5E1; /* 默认边框，会被状态色覆盖 */
+            --cell-bd-width: 3px;
+            --cell-bd-col: #CBD5E1; 
             --cell-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
             --ring-bg: rgba(0,0,0,0.08);
             
-            /* 3. 状态颜色 (默认值，会被 JS 覆盖) */
+            /* 3. 状态颜色 (JS动态注入) */
             --st-0: #E8F5E9; 
             --st-1: #FFF3E0; 
             --st-2: #FFEBEE;
@@ -78,16 +78,25 @@
             overflow: hidden; 
         }
 
-        /* === 侧边栏 (PC/Mobile 通用基础) === */
+        /* === [修改] 侧边栏基础样式 (PC/Mobile 通用) === */
         .sidebar { 
-            width: 300px; 
+            width: 300px; /* 默认宽度 */
             background: var(--sidebar-bg); 
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border-right: 1px solid var(--border); 
             display: flex; flex-direction: column; 
             z-index: 20; flex-shrink: 0; 
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            /* 增加宽度过渡动画 */
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
             box-shadow: 5px 0 30px rgba(0,0,0,0.05);
+            overflow: hidden; /* 关键：折叠时隐藏内容 */
+            white-space: nowrap; /* 关键：防止文字换行 */
+        }
+        
+        /* [新增] PC端折叠状态类 (加在body上) */
+        body.pc-collapsed .sidebar {
+            width: 0;
+            border-right: none;
         }
         
         .search-box { padding: 20px; border-bottom: 1px solid var(--border); }
@@ -139,26 +148,27 @@
         .leg-item { display: flex; align-items: center; font-size: 12px; color: var(--sub); width: 48%; }
         .dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; box-shadow: 0 0 0 1px var(--border);}
 
-        .main { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; }
+        .main { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; /* main区域会自动填充剩余空间 */ }
         
         /* 顶部栏 */
         .header { 
-            padding: 0 20px; /* 移动端减小 padding */
+            padding: 0 20px;
             background: var(--card-bg); 
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border); 
-            display: flex; align-items: center; /* 确保垂直居中 */
+            display: flex; align-items: center;
             z-index: 10; height: 64px; flex-shrink: 0;
             box-shadow: 0 4px 20px rgba(0,0,0,0.02);
         }
         
-        /* === 汉堡菜单按钮 (默认隐藏) === */
+        /* === [修改] 汉堡菜单按钮 (全平台显示) === */
         .menu-btn { 
-            display: none; 
-            font-size: 24px; padding: 10px; margin-right: 10px; cursor: pointer; color: var(--text); 
+            display: block; /* PC和手机都显示 */
+            font-size: 24px; padding: 8px 12px; margin-right: 4px; cursor: pointer; color: var(--text); 
             border-radius: 8px; transition: background 0.2s;
         }
-        .menu-btn:active { background: var(--hover); }
+        .menu-btn:hover { background: var(--hover); }
+        .menu-btn:active { background: var(--primary-fade); color: var(--primary); }
 
         .h-tit { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;}
         .h-sub { font-size: 12px; color: var(--sub); margin-top: 2px; display: flex; align-items: center; }
@@ -191,7 +201,7 @@
             user-select: none; font-family: ui-monospace, monospace;
         }
 
-        /* 盒子孔位 (V22 样式) */
+        /* 盒子孔位 */
         .cell { 
             width: var(--cell-size); height: var(--cell-size); 
             border-radius: 12px; 
@@ -203,7 +213,6 @@
             box-shadow: var(--cell-shadow);
         }
         
-        /* 状态颜色注入 */
         .cell.s-0 { background-color: var(--st-0); border-color: var(--st-0); }
         .cell.s-1 { background-color: var(--st-1); border-color: var(--st-1); }
         .cell.s-2 { background-color: var(--st-2); border-color: var(--st-2); }
@@ -223,9 +232,9 @@
         .cell.dim { opacity: 0.15; filter: grayscale(100%); }
         .cell.hi { transform: scale(1.15); z-index: 10; border-color: var(--primary) !important; box-shadow: 0 0 0 3px var(--primary-fade); }
 
-        /* === [关键] 移动端适配 (Max Width 768px) === */
+        /* === 移动端适配 (Max Width 768px) === */
         @media (max-width: 768px) {
-            /* 1. 侧边栏：变为浮动抽屉，默认隐藏 */
+            /* 移动端侧边栏：抽屉模式 */
             .sidebar { 
                 position: fixed; 
                 height: 100%; 
@@ -234,28 +243,24 @@
                 width: 85%; max-width: 320px; 
                 box-shadow: 10px 0 30px rgba(0,0,0,0.2); 
                 border-right: none;
-                z-index: 1000; /* 最高层级 */
+                z-index: 1000;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* 移动端使用 transform 过渡 */
             }
-            .sidebar.show { 
-                transform: translateX(0); /* 显示 */
-            }
+            .sidebar.show { transform: translateX(0); }
             
-            /* 2. 显示汉堡按钮 */
-            .menu-btn { display: block !important; }
-            
-            /* 3. 遮罩层 (点击关闭菜单) */
+            /* 确保PC端的折叠类不会影响移动端 */
+            body.pc-collapsed .sidebar { width: 85%; } 
+
             .overlay { 
                 display: none; position: fixed; inset:0; 
-                background: rgba(0,0,0,0.4); 
-                z-index: 900; /* 在侧边栏之下，内容之上 */
+                background: rgba(0,0,0,0.4); z-index: 900;
                 backdrop-filter: blur(2px); 
             }
             .overlay.show { display: block; }
             
-            /* 4. 网格调整 */
             .grid-vp { padding: 10px; align-items: flex-start; }
             :root { --cell-size: 44px; --gap: 6px; }
-            .t-main { font-size: 10px; } .t-sub { display: none; } /* 隐藏副标题以节省空间 */
+            .t-main { font-size: 10px; } .t-sub { display: none; }
             .core { inset: 5px; } .ring { inset: 2px; }
             .h-tit { max-width: 180px; font-size: 18px; }
             .grid { padding: 12px; border-radius: 16px; }
@@ -269,7 +274,7 @@
             background: var(--card-bg); 
             backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
             border-radius: 24px 24px 0 0; 
-            padding: 24px; z-index: 1100; /* 比侧边栏还高 */
+            padding: 24px; z-index: 1100; 
             transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); 
             box-shadow: 0 -10px 40px rgba(0,0,0,0.1); 
             color: var(--text); border-top: 1px solid var(--border); 
@@ -340,11 +345,52 @@
     const vp = document.getElementById('vp');
     let isDown=false, sX, sY, sL, sT;
     
-    // PC端鼠标拖拽
+    // PC端网格拖拽
     vp.addEventListener('mousedown', e => { isDown=true; vp.classList.add('active'); sX=e.pageX-vp.offsetLeft; sY=e.pageY-vp.offsetTop; sL=vp.scrollLeft; sT=vp.scrollTop; });
     vp.addEventListener('mouseleave', () => { isDown=false; vp.classList.remove('active'); });
     vp.addEventListener('mouseup', () => { isDown=false; vp.classList.remove('active'); });
     vp.addEventListener('mousemove', e => { if(!isDown)return; e.preventDefault(); const x=e.pageX-vp.offsetLeft; const y=e.pageY-vp.offsetTop; vp.scrollLeft=sL-(x-sX)*1.5; vp.scrollTop=sT-(y-sY)*1.5; });
+
+    // === [新增] 移动端手势滑动检测 ===
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const sidebarEl = document.getElementById('sidebar');
+    const SWIPE_THRESHOLD = 60; // 滑动触发阈值
+    const EDGE_THRESHOLD = 50;  // 边缘检测区域宽度
+
+    document.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, {passive: true});
+
+    document.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, {passive: true});
+
+    function handleSwipe() {
+        // 仅在移动端触发
+        if (window.innerWidth > 768) return;
+
+        const swipeDistance = touchEndX - touchStartX;
+        const isOpen = sidebarEl.classList.contains('show');
+
+        // 右滑 (打开)
+        if (swipeDistance > SWIPE_THRESHOLD) {
+            // 只有从屏幕左边缘开始滑动才触发打开
+            if (touchStartX < EDGE_THRESHOLD && !isOpen) {
+                toggleMenu();
+            }
+        }
+
+        // 左滑 (关闭)
+        if (swipeDistance < -SWIPE_THRESHOLD) {
+            // 只要菜单是打开状态，任何左滑都触发关闭
+            if (isOpen) {
+                toggleMenu();
+            }
+        }
+    }
+    // =================================
 
     window.onload = async function() {
         try {
@@ -384,7 +430,7 @@
                     CL = { types: DATA.types || {}, st: {} };
                 }
                 
-                // 动态注入颜色到 CSS 变量
+                // 动态注入颜色
                 if(CL.st) {
                     const r = document.documentElement;
                     if(CL.st[0]) r.style.setProperty('--st-0', CL.st[0]);
@@ -460,7 +506,7 @@
                 itemDiv.onclick = (e) => { 
                     e.stopPropagation(); 
                     loadBox(b.id); 
-                    // [关键] 移动端点击盒子后自动收起菜单
+                    // 移动端点击后自动收起菜单
                     if(window.innerWidth <= 768) toggleMenu(); 
                 };
                 container.appendChild(itemDiv);
@@ -649,10 +695,17 @@
     
     function closeM() { document.querySelector('.m-mask').classList.remove('show'); document.querySelector('.modal').classList.remove('show'); }
     
-    // [新增] 切换菜单显示/隐藏
+    // [修改] 统一的菜单切换逻辑
     function toggleMenu() { 
-        document.getElementById('sidebar').classList.toggle('show'); 
-        document.querySelector('.overlay').classList.toggle('show');
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) {
+            // 移动端：切换 class 显示抽屉和遮罩
+            document.getElementById('sidebar').classList.toggle('show'); 
+            document.querySelector('.overlay').classList.toggle('show');
+        } else {
+            // PC端：切换 body class 来折叠宽度
+            document.body.classList.toggle('pc-collapsed');
+        }
     }
 </script>
 </body>
