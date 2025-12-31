@@ -7,188 +7,280 @@
     <title>CryoMaster View</title>
     <script src="https://unpkg.com/fflate@0.8.0"></script>
     <style>
-        /* === 变量定义 (V19.2 轮廓增强版) === */
+        /* === 变量定义 (V20 旗舰氛围版) === */
         :root {
-            --bg: #F5F7FA; 
-            --card: #FFFFFF; 
-            --text: #333333; 
-            --sub: #888888;
-            --border: #E5E5EA;
-            --primary: #007AFF; 
-            --primary-bg: rgba(0, 122, 255, 0.1); 
-            --warn: #D93025;
+            /* Light Mode */
+            /* [升级] 背景不再是纯色，而是渐变基调 */
+            --bg-gradient: linear-gradient(135deg, #F6F9FC 0%, #EBF1F5 100%);
             
-            --hover: #F2F2F7;
-            --active-text: #007AFF;
+            /* [升级] 卡片半透明，启用磨砂 */
+            --card-bg: rgba(255, 255, 255, 0.75);
+            --sidebar-bg: rgba(255, 255, 255, 0.85);
             
+            --text: #1E293B; 
+            --sub: #64748B;
+            --border: rgba(0, 0, 0, 0.08); /* 更轻透的边框 */
+            
+            --primary: #3B82F6; 
+            --primary-light: #60A5FA;
+            --primary-fade: rgba(59, 130, 246, 0.12); 
+            
+            --warn: #EF4444;
+            --hover: rgba(0, 0, 0, 0.03);
+            
+            /* 孔位样式 (完全保留 V19.2) */
             --cell-size: 64px; 
-            --gap: 10px; /* 间距稍微拉大一点点，让轮廓不打架 */
+            --gap: 10px;
             --cell-bg: #FFFFFF;
-            
-            /* [新增] 轮廓专用变量 */
-            --cell-bd-width: 2px;       /* 孔位边框加粗 */
-            --cell-bd-col: #CBD5E1;     /* 孔位边框颜色 (更明显) */
-            --grid-bd-col: #94A3B8;     /* 外框边框颜色 */
-            --cell-shadow: inset 0 2px 4px rgba(0,0,0,0.03); /* 轻微内阴影，增加深度 */
-
+            --cell-bd-width: 2px;
+            --cell-bd-col: #CBD5E1;
+            --cell-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
             --ring-bg: rgba(0,0,0,0.06);
-            --axis-col: #334155; 
             
-            --st-0: #E8F5E9; --st-1: #FFF3E0; --st-2: #FFEBEE;
+            /* 状态色 */
+            --st-0: #FFFFFF; --st-1: #FEF2F2; --st-2: #F1F5F9;
+            --shadow: 0 1px 3px rgba(0,0,0,0.05);
+            
+            /* [新增] 氛围光晕颜色 */
+            --glow: rgba(59, 130, 246, 0.15);
+            --axis-col: #475569;
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
-                --bg: #000000; 
-                --card: #1C1C1E; 
-                --text: #F0F0F0; 
-                --sub: #98989D;
-                --border: #38383A;
-                --primary: #0A84FF; 
-                --primary-bg: rgba(10, 132, 255, 0.15);
-                --warn: #FF453A;
+                /* Dark Mode */
+                /* [升级] 深邃星空渐变 */
+                --bg-gradient: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
                 
-                --hover: #2C2C2E;
-                --active-text: #FFFFFF;
+                --card-bg: rgba(30, 41, 59, 0.70);
+                --sidebar-bg: rgba(15, 23, 42, 0.80);
                 
-                --cell-bg: #2C2C2E;
+                --text: #F1F5F9; 
+                --sub: #94A3B8;
+                --border: rgba(255, 255, 255, 0.1);
                 
-                /* [新增] Dark模式轮廓 */
-                --cell-bd-col: #475569;   /* 深色模式下的边框 */
-                --grid-bd-col: #64748B;
-                --cell-shadow: inset 0 2px 4px rgba(0,0,0,0.2); 
+                --primary: #60A5FA; 
+                --primary-light: #93C5FD;
+                --primary-fade: rgba(96, 165, 250, 0.2);
                 
+                --warn: #F87171;
+                --hover: rgba(255, 255, 255, 0.05);
+                
+                --cell-bg: #1E293B;
+                --cell-bd-col: #475569;
+                --cell-shadow: inset 0 2px 4px rgba(0,0,0,0.25);
                 --ring-bg: rgba(255,255,255,0.15);
+                
+                --st-0: #1E293B; --st-1: #281818; --st-2: #18181b;
+                --shadow: none;
+                
+                --glow: rgba(96, 165, 250, 0.1);
                 --axis-col: #CBD5E1;
             }
             
-            .cell.s-0 { background-color: rgba(48, 209, 88, 0.15) !important; }
-            .cell.s-1 { background-color: rgba(255, 159, 10, 0.15) !important; }
-            .cell.s-2 { background-color: rgba(255, 69, 58, 0.15) !important; }
-            
-            .search-inp { background: #2C2C2E !important; color: #FFF !important; }
-            .warn-box { background: rgba(255, 69, 58, 0.15) !important; border-color: rgba(255, 69, 58, 0.3) !important; color: #FF453A !important; }
+            .search-inp { background: rgba(0,0,0,0.3) !important; color: #FFF !important; border-color: var(--border) !important;}
+            .warn-box { background: rgba(239, 68, 68, 0.2) !important; }
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; height: 100vh; display: flex; overflow: hidden; }
-
-        .sidebar { width: 300px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 20; flex-shrink: 0; transition: transform 0.3s; }
-        .search-box { padding: 12px 16px; border-bottom: 1px solid var(--border); }
-        .search-inp { width: 100%; padding: 8px 12px; border-radius: 8px; border: none; background: #F5F7FA; font-size: 14px; outline: none; transition: background 0.3s; }
-        .search-inp:focus { background: var(--hover); }
-        .list-wrap { flex: 1; overflow-y: auto; padding: 10px 0; }
-
-        .folder-row { padding: 10px 16px; cursor: pointer; display: flex; align-items: center; font-size: 14px; font-weight: 600; color: var(--text); transition: background 0.1s; }
-        .folder-row:hover { background: var(--hover); }
-        .folder-icon { margin-right: 8px; font-size: 12px; color: var(--sub); transition: transform 0.2s; display: inline-block; width: 16px; text-align: center;}
-        .folder-row.expanded .folder-icon { transform: rotate(90deg); }
         
-        .box-row { padding: 8px 16px 8px 0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--text); margin: 1px 8px; border-radius: 6px; transition: all 0.1s; border: 1px solid transparent; }
-        .box-row:hover { background: var(--hover); }
-        .box-row.active { background: var(--primary-bg); color: var(--active-text); border-color: var(--primary-bg); font-weight: 600; }
-        .box-row.active .b-n, .box-row.active .b-p { color: var(--primary); }
-        .b-n { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 170px; display: flex; align-items: center; }
-        .b-icon { margin-right: 6px; font-size: 14px; }
-        .b-p { font-size: 12px; opacity: 0.6; margin-left: 8px; font-family: monospace;}
-        .folder-cnt { display: none; }
-        .folder-cnt.open { display: block; }
+        body { 
+            margin: 0; 
+            /* [升级] 启用全屏渐变背景 */
+            background: var(--bg-gradient); 
+            background-attachment: fixed; /* 背景固定，内容滚动 */
+            color: var(--text); 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            height: 100vh; 
+            display: flex; 
+            overflow: hidden; 
+        }
 
-        .legend { padding: 16px; background: var(--card); border-top: 1px solid var(--border); min-height: 80px; max-height: 200px; overflow-y: auto; }
-        .leg-title { font-size: 11px; font-weight: bold; color: var(--sub); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .leg-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        /* [升级] 磨砂玻璃效果侧边栏 */
+        .sidebar { 
+            width: 300px; 
+            background: var(--sidebar-bg); 
+            backdrop-filter: blur(20px); /* 毛玻璃核心 */
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border); 
+            display: flex; flex-direction: column; 
+            z-index: 20; flex-shrink: 0; 
+            transition: transform 0.3s; 
+            box-shadow: 5px 0 30px rgba(0,0,0,0.05);
+        }
+        
+        .search-box { padding: 20px; border-bottom: 1px solid var(--border); }
+        .search-inp { 
+            width: 100%; padding: 10px 14px; border-radius: 10px; 
+            border: 1px solid var(--border); 
+            background: rgba(255,255,255,0.5); /* 半透明输入框 */
+            font-size: 14px; outline: none; transition: all 0.3s; color: var(--text); 
+        }
+        .search-inp:focus { 
+            border-color: var(--primary); 
+            background: var(--card-bg); 
+            box-shadow: 0 0 0 3px var(--primary-fade);
+        }
+        
+        .list-wrap { flex: 1; overflow-y: auto; padding: 12px 0; }
+
+        .folder-row { 
+            padding: 12px 20px; cursor: pointer; display: flex; align-items: center; 
+            font-size: 14px; font-weight: 600; color: var(--text); 
+            transition: all 0.2s; opacity: 0.8;
+        }
+        .folder-row:hover { opacity: 1; background: var(--hover); }
+        .folder-icon { margin-right: 10px; font-size: 12px; color: var(--sub); transition: transform 0.2s; display: inline-block; width: 16px; text-align: center;}
+        .folder-row.expanded .folder-icon { transform: rotate(90deg); color: var(--primary); }
+        
+        /* [升级] 列表项样式 */
+        .box-row { 
+            padding: 10px 16px 10px 12px; 
+            cursor: pointer; display: flex; justify-content: space-between; align-items: center; 
+            font-size: 13px; color: var(--text); 
+            margin: 4px 12px; border-radius: 8px; 
+            transition: all 0.2s; border: 1px solid transparent; 
+            position: relative; overflow: hidden;
+        }
+        .box-row:hover { background: var(--hover); transform: translateX(2px); }
+        
+        /* [升级] 激活状态：左侧光标条 + 渐变背景 */
+        .box-row.active { 
+            background: var(--primary-fade); 
+            color: var(--primary); 
+            font-weight: 600; 
+        }
+        .box-row.active::before {
+            content: ""; position: absolute; left: 0; top: 15%; bottom: 15%; width: 3px; 
+            background: var(--primary); border-radius: 0 3px 3px 0;
+        }
+        
+        .b-n { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 170px; display: flex; align-items: center; }
+        .b-icon { margin-right: 8px; font-size: 16px; opacity: 0.8; filter: grayscale(1); transition: filter 0.2s; }
+        .box-row.active .b-icon { filter: grayscale(0); }
+        .b-p { font-size: 12px; opacity: 0.5; margin-left: 8px; font-family: monospace;}
+
+        .legend { padding: 20px; background: transparent; border-top: 1px solid var(--border); min-height: 80px; }
+        .leg-title { font-size: 11px; font-weight: 800; color: var(--sub); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7;}
+        .leg-grid { display: flex; flex-wrap: wrap; gap: 10px; }
         .leg-item { display: flex; align-items: center; font-size: 12px; color: var(--sub); width: 48%; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; box-shadow: 0 0 0 1px var(--border);}
 
         .main { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; }
-        .header { padding: 0 20px; background: var(--card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.03); z-index: 10; height: 60px; flex-shrink: 0;}
-        .h-tit { font-size: 18px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;}
-        .h-sub { font-size: 12px; color: var(--sub); margin-top: 2px; display: flex; align-items: center; flex-wrap: wrap; }
-        .header-warn { color: var(--warn); font-weight: 700; margin-left: 10px; font-size: 12px; display: flex; align-items: center; background: rgba(217,48,37,0.08); padding: 2px 6px; border-radius: 4px; }
-        .menu-btn { display: none; font-size: 20px; padding: 10px; margin-right: 5px; cursor: pointer; color: var(--text); }
+        
+        /* [升级] 顶部半透明标题栏 */
+        .header { 
+            padding: 0 30px; 
+            background: var(--card-bg); 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border); 
+            display: flex; justify-content: space-between; align-items: center; 
+            z-index: 10; height: 70px; flex-shrink: 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+        .h-tit { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+        .h-sub { font-size: 13px; color: var(--sub); margin-top: 4px; display: flex; align-items: center; }
+        .header-warn { color: var(--warn); font-weight: 700; margin-left: 12px; font-size: 12px; display: flex; align-items: center; background: rgba(239,68,68,0.1); padding: 4px 10px; border-radius: 20px; }
+        .menu-btn { display: none; font-size: 24px; margin-right: 10px; cursor: pointer; color: var(--text); }
 
-        .grid-vp { flex: 1; overflow: auto; padding: 20px; display: flex; justify-content: center; align-items: flex-start; cursor: grab; background: var(--bg); position: relative; }
+        .grid-vp { flex: 1; overflow: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; cursor: grab; position: relative; }
         .grid-vp.active { cursor: grabbing; }
         
-        /* [修改] 外框：加粗边框，增加阴影层次 */
+        /* [升级] 网格容器：悬浮感 + 漫射光 */
         .grid { 
-            display: grid; padding: 20px; 
-            background: var(--card); 
-            border-radius: 16px; 
-            /* 2px实线边框 + 柔和的大阴影 */
-            border: 2px solid var(--grid-bd-col);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.06); 
-            margin-bottom: 40px; 
+            display: grid; padding: 24px; 
+            background: var(--card-bg); 
+            backdrop-filter: blur(10px);
+            border-radius: 20px; 
+            border: 1px solid var(--border);
+            /* 更有质感的双层阴影 */
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.1);
+            margin-bottom: 60px; 
+            position: relative;
+        }
+        /* 装饰性光晕 */
+        .grid::before {
+            content: ""; position: absolute; inset: -20px; z-index: -1;
+            background: radial-gradient(circle at center, var(--glow), transparent 70%);
+            opacity: 0.6; pointer-events: none; border-radius: 40px;
         }
         
         .axis { 
             display: flex; align-items: center; justify-content: center; 
             font-size: 13px; font-weight: 800; 
-            color: var(--axis-col); 
-            opacity: 1; 
-            user-select: none;
+            color: var(--axis-col); opacity: 0.9; 
+            user-select: none; font-family: ui-monospace, monospace;
         }
 
-        /* [修改] 孔位：加粗边框 + 内阴影 */
+        /* === 盒子样式 (保留 V19.2) === */
         .cell { 
             width: var(--cell-size); height: var(--cell-size); 
-            border-radius: 10px; 
+            border-radius: 12px; 
             background: var(--cell-bg); 
-            /* 核心修改：边框加粗，使用专用颜色 */
             border: var(--cell-bd-width) solid var(--cell-bd-col); 
-            position: relative; 
-            cursor: pointer; 
+            position: relative; cursor: pointer; 
             display: flex; align-items: center; justify-content: center; 
-            transition: transform 0.1s; 
-            /* 核心修改：增加内阴影，增加厚度感 */
+            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1); /* 弹性动画 */
             box-shadow: var(--cell-shadow);
         }
-        
+        .cell:hover { transform: scale(1.05); z-index: 5; border-color: var(--primary); }
         .cell:active { transform: scale(0.95); }
-        .cell.empty { border: 2px dashed var(--border); opacity: 0.4; background: transparent; pointer-events: none; box-shadow: none;}
+        .cell.empty { border: 2px dashed var(--border); opacity: 0.3; background: transparent; pointer-events: none; box-shadow: none;}
         
-        .ring { position: absolute; inset: 3px; border-radius: 50%; z-index: 1; background: var(--ring-bg); }
-        .core { position: absolute; inset: 7px; border-radius: 50%; background: #999; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .t-main { font-size: 11px; font-weight: 700; max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 2px; }
-        .t-sub { font-size: 8px; opacity: 0.9; font-weight: 500; margin-top: 1px; max-width: 85%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-        .warn { position: absolute; top: -5px; right: -5px; width: 16px; height: 16px; background: var(--warn); border: 2px solid var(--card); border-radius: 50%; z-index: 5; color: #fff; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .cell.s-1 { background-color: var(--st-1); border-color: rgba(239, 68, 68, 0.2); }
+        .cell.s-2 { background-color: var(--st-2); border-color: var(--border); opacity: 0.6; }
+
+        .ring { position: absolute; inset: 4px; border-radius: 50%; z-index: 1; background: var(--ring-bg); }
+        .core { position: absolute; inset: 8px; border-radius: 50%; background: #94A3B8; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; line-height: 1.1; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+        .t-main { font-size: 11px; font-weight: 700; max-width: 90%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 2px; letter-spacing: -0.3px;}
+        .t-sub { font-size: 9px; opacity: 0.95; font-weight: 600; margin-top: 1px; max-width: 85%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; transform: scale(0.9);}
+        
+        .warn { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; background: var(--warn); border: 3px solid var(--cell-bg); border-radius: 50%; z-index: 5; color: #fff; font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         
         .cell.dim { opacity: 0.15; filter: grayscale(100%); }
-        /* 选中状态：边框变色且加粗 */
-        .cell.hi { transform: scale(1.1); z-index: 10; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
+        .cell.hi { transform: scale(1.15); z-index: 10; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-fade); }
 
         @media (max-width: 768px) {
-            .sidebar { position: absolute; height: 100%; transform: translateX(-100%); width: 80%; max-width: 320px; box-shadow: 10px 0 30px rgba(0,0,0,0.2); }
-            .sidebar.show { transform: translateX(0); }
-            .menu-btn { display: block; }
-            .overlay { display: none; position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 15; backdrop-filter: blur(2px); }
-            .overlay.show { display: block; }
-            .grid-vp { padding: 10px; align-items: flex-start; }
-            :root { --cell-size: 42px; --gap: 4px; }
-            .t-main { font-size: 9px; } .t-sub { display: none; }
+            .sidebar { width: 85%; max-width: 320px; border-right: none;}
+            .grid-vp { padding: 15px; align-items: flex-start; }
+            :root { --cell-size: 46px; --gap: 6px; }
+            .t-main { font-size: 10px; } .t-sub { display: none; }
             .core { inset: 5px; } .ring { inset: 2px; }
-            .h-tit { max-width: 160px; font-size: 16px; }
+            .h-tit { max-width: 160px; font-size: 18px; }
+            .grid { padding: 15px; border-radius: 16px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
         }
 
-        .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.5); z-index: 99; display: none; backdrop-filter: blur(2px); }
+        /* 详情弹窗 (拟态风格) */
+        .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.3); z-index: 99; display: none; backdrop-filter: blur(5px); }
         .m-mask.show { display: block; }
-        .modal { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); border-radius: 16px 16px 0 0; padding: 24px; z-index: 100; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 -5px 30px rgba(0,0,0,0.2); color: var(--text); border-top: 1px solid var(--border); max-height: 85vh; overflow-y: auto; }
+        .modal { 
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: var(--card-bg); 
+            backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border-radius: 24px 24px 0 0; 
+            padding: 30px; z-index: 100; 
+            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); 
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1); 
+            color: var(--text); border-top: 1px solid var(--border); 
+            max-height: 85vh; overflow-y: auto; 
+        }
         .modal.show { transform: translateY(0); }
-        .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
-        .lbl { color: var(--sub); font-size: 13px; } .val { font-weight: 500; color: var(--text); text-align: right; max-width: 70%; word-break: break-all;}
-        .tag { background: rgba(128,128,128,0.1); padding: 4px 8px; border-radius: 6px; font-size: 12px; margin-right: 6px; color: var(--text); border: 1px solid var(--border); display: inline-block; margin-bottom: 4px;}
-        .warn-box { margin-bottom: 15px; background: #FFF5F5; padding: 10px; border-radius: 8px; font-size: 13px; color: var(--warn); border: 1px solid rgba(217, 48, 37, 0.2); display: flex; align-items: center; }
+        .row { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .lbl { color: var(--sub); font-size: 13px; font-weight: 500; } .val { font-weight: 600; color: var(--text); text-align: right; max-width: 70%; word-break: break-all;}
+        .tag { background: var(--hover); padding: 5px 12px; border-radius: 8px; font-size: 12px; margin-right: 6px; color: var(--text); border: 1px solid var(--border); display: inline-block; margin-bottom: 6px; font-weight: 500;}
+        .warn-box { margin-bottom: 20px; background: rgba(239, 68, 68, 0.08); padding: 16px; border-radius: 12px; font-size: 14px; color: var(--warn); border: 1px solid rgba(239, 68, 68, 0.15); display: flex; align-items: center; }
         
-        .loading { position: fixed; inset:0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 200; color: var(--sub); text-align: center; padding: 20px;}
-        .empty-state { font-size: 14px; color: var(--sub); margin-top: 10px; line-height: 1.6; }
-        .err { color: var(--warn); background: rgba(255, 69, 58, 0.1); padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 12px; max-width: 90%; display: none; word-break: break-all; font-family: monospace; }
+        .loading { position: fixed; inset:0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-gradient); z-index: 200; color: var(--sub); text-align: center; padding: 20px;}
+        .empty-state { font-size: 15px; color: var(--sub); margin-top: 16px; line-height: 1.6; font-weight: 500;}
+        .err { color: var(--warn); background: rgba(239, 68, 68, 0.1); padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 12px; max-width: 90%; display: none; word-break: break-all; font-family: monospace; }
     </style>
 </head>
 <body>
 
 <div id="loading" class="loading">
-    <div id="statusIcon" style="font-size:48px; margin-bottom:16px">📦</div>
-    <div id="statusTitle" style="font-size:18px; font-weight:bold; color:var(--text)">Waiting for data...</div>
+    <div id="statusIcon" style="font-size:56px; margin-bottom:20px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));">📦</div>
+    <div id="statusTitle" style="font-size:22px; font-weight:800; color:var(--text); letter-spacing:-0.5px">Waiting for data...</div>
     <div id="statusDesc" class="empty-state">
         Please generate a QR code from the software<br>and scan it to view data.
     </div>
@@ -218,19 +310,19 @@
 
 <div class="m-mask" onclick="closeM()"></div>
 <div class="modal" id="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <span id="mCoord" style="background:var(--sub);color:#fff;padding:4px 10px;border-radius:6px;font-weight:bold;font-size:14px">-</span>
-        <span onclick="closeM()" style="font-size:28px;color:var(--sub);cursor:pointer;line-height:20px">&times;</span>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <span id="mCoord" style="background:var(--sub);color:#fff;padding:6px 14px;border-radius:10px;font-weight:700;font-size:16px;box-shadow:0 4px 10px rgba(0,0,0,0.15)">-</span>
+        <span onclick="closeM()" style="font-size:32px;color:var(--sub);cursor:pointer;line-height:20px;padding:5px;opacity:0.6;transition:opacity 0.2s">&times;</span>
     </div>
-    <h3 id="mName" style="margin:0 0 4px 0; font-size:18px; line-height:1.3">-</h3>
-    <div id="mType" style="color:var(--sub); font-size:13px; margin-bottom:16px">-</div>
+    <h3 id="mName" style="margin:0 0 6px 0; font-size:24px; line-height:1.2; font-weight:800; letter-spacing:-0.5px">-</h3>
+    <div id="mType" style="color:var(--sub); font-size:15px; margin-bottom:24px; font-weight:500">-</div>
     <div id="mWarn" class="warn-box" style="display:none"></div>
-    <div class="row"><span class="lbl" id="l_st">St</span><span class="val" id="mStatus">-</span></div>
-    <div class="row"><span class="lbl" id="l_op">Op</span><span class="val" id="mOp">-</span></div>
-    <div class="row"><span class="lbl" id="l_dt">Dt</span><span class="val" id="mDate">-</span></div>
-    <div class="row"><span class="lbl" id="l_vl">Vol</span><span class="val" id="mVol">-</span></div>
-    <div id="mTags" style="margin-top:15px; display:flex; flex-wrap:wrap; gap:5px"></div>
-    <div id="mDesc" style="margin-top:15px; background:rgba(128,128,128,0.08); padding:12px; border-radius:8px; font-size:13px; color:var(--text); display:none; border:1px solid var(--border); line-height: 1.5;"></div>
+    <div class="row"><span class="lbl" id="l_st">Status</span><span class="val" id="mStatus">-</span></div>
+    <div class="row"><span class="lbl" id="l_op">Operator</span><span class="val" id="mOp">-</span></div>
+    <div class="row"><span class="lbl" id="l_dt">Date</span><span class="val" id="mDate">-</span></div>
+    <div class="row"><span class="lbl" id="l_vl">Volume</span><span class="val" id="mVol">-</span></div>
+    <div id="mTags" style="margin-top:24px; display:flex; flex-wrap:wrap; gap:8px"></div>
+    <div id="mDesc" style="margin-top:24px; background:var(--hover); padding:16px; border-radius:12px; font-size:14px; color:var(--text); display:none; border:1px solid var(--border); line-height: 1.6;"></div>
 </div>
 
 <script>
@@ -238,7 +330,6 @@
     const vp = document.getElementById('vp');
     let isDown=false, sX, sY, sL, sT;
     
-    // PC端鼠标拖拽支持
     vp.addEventListener('mousedown', e => { isDown=true; vp.classList.add('active'); sX=e.pageX-vp.offsetLeft; sY=e.pageY-vp.offsetTop; sL=vp.scrollLeft; sT=vp.scrollTop; });
     vp.addEventListener('mouseleave', () => { isDown=false; vp.classList.remove('active'); });
     vp.addEventListener('mouseup', () => { isDown=false; vp.classList.remove('active'); });
@@ -247,16 +338,14 @@
     window.onload = async function() {
         try {
             const h = window.location.hash.substring(1);
-            if(!h) return; // 无数据停留欢迎页
+            if(!h) return; 
             
-            // Base64 处理
             let b64 = h.replace(/-/g, '+').replace(/_/g, '/');
             while(b64.length % 4) b64 += '=';
             const bin = atob(b64);
             const buf = new Uint8Array(bin.length);
             for(let i=0; i<bin.length; i++) buf[i]=bin.charCodeAt(i);
 
-            // 解压 (支持 fflate 或 原生 DecompressionStream)
             let json;
             try {
                 if(window.fflate) {
@@ -271,25 +360,19 @@
 
             DATA = JSON.parse(json);
             
-            // 数据解析
             if(DATA.v >= 9) {
-                // V16-V18 结构处理
-                // DB数据源
-                if(DATA.d) DB = DATA.d;         // 新版
-                else if(DATA.boxes) DB = DATA.boxes; // 旧版 V16
+                if(DATA.d) DB = DATA.d;
+                else if(DATA.boxes) DB = DATA.boxes;
                 else DB = DATA.db || [];
                 
-                // 配置提取
                 if(DATA.c) {
                     UI = DATA.c.ui || {};
                     CL = DATA.c.colors || { types:{}, st:{} };
                 } else {
-                    // 旧版回退
                     UI = { title:"CryoMaster", search:"Search", legend:"Legend", fields:{st:"Status"}, st_txt:{} };
                     CL = { types: DATA.types || {}, st: {} };
                 }
                 
-                // 默认UI文案
                 if(!UI.title) UI.title = "CryoMaster";
                 if(!UI.fields) UI.fields = {st:"Status", op:"Op", dt:"Date", vol:"Vol", warn:"Warning"};
                 
@@ -298,9 +381,7 @@
                 renderLegend();
                 if(DB.length > 0) loadBox(DB[0].id);
                 document.getElementById('loading').style.display = 'none';
-            } else {
-                throw "Version mismatch (Require V9+)";
-            }
+            } else { throw "Version mismatch"; }
         } catch(e) {
             console.error(e);
             document.getElementById('statusIcon').textContent = "⚠️";
@@ -326,7 +407,6 @@
         
         const tree = { _boxes: [], _folders: {} };
         DB.forEach(box => {
-            // box.c 是分类路径 (e.g. "A/B")
             const parts = (box.c || "Uncategorized").split('/').filter(p => p.trim() !== "");
             let current = tree;
             parts.forEach(p => {
@@ -337,38 +417,29 @@
         });
 
         function buildNode(node, container, depth=0) {
-            // 先渲染文件夹
             for (const [name, subNode] of Object.entries(node._folders)) {
                 const folderDiv = document.createElement('div');
                 const titleDiv = document.createElement('div');
                 titleDiv.className = "folder-row expanded";
-                titleDiv.style.paddingLeft = `${depth * 12 + 16}px`;
+                titleDiv.style.paddingLeft = `${depth * 12 + 20}px`;
                 titleDiv.innerHTML = `<span class="folder-icon">▶</span> 📂 ${name}`;
                 
                 const contentDiv = document.createElement('div');
                 contentDiv.className = "folder-cnt open";
-                
                 titleDiv.onclick = (e) => { 
-                    e.stopPropagation(); 
-                    titleDiv.classList.toggle('expanded'); 
-                    contentDiv.classList.toggle('open'); 
+                    e.stopPropagation(); titleDiv.classList.toggle('expanded'); contentDiv.classList.toggle('open'); 
                 };
-                
-                folderDiv.appendChild(titleDiv); 
-                folderDiv.appendChild(contentDiv); 
-                container.appendChild(folderDiv);
+                folderDiv.appendChild(titleDiv); folderDiv.appendChild(contentDiv); container.appendChild(folderDiv);
                 buildNode(subNode, contentDiv, depth+1);
             }
-            // 再渲染盒子
             node._boxes.forEach(b => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = "box-row";
-                itemDiv.style.paddingLeft = `${depth * 12 + 24}px`;
+                itemDiv.style.paddingLeft = `${depth * 12 + 28}px`;
                 itemDiv.id = `btn-${b.id}`;
                 itemDiv.innerHTML = `<div class="b-n"><span class="b-icon">📦</span> ${b.n}</div><div class="b-p">${b.p}%</div>`;
                 itemDiv.onclick = (e) => { 
-                    e.stopPropagation(); 
-                    loadBox(b.id); 
+                    e.stopPropagation(); loadBox(b.id); 
                     if(window.innerWidth <= 768) toggleMenu(); 
                 };
                 container.appendChild(itemDiv);
@@ -377,35 +448,27 @@
         buildNode(tree, root);
     }
 
-    // 搜索功能
     document.getElementById('search').addEventListener('input', e => {
         const k = e.target.value.toLowerCase().trim();
         const allBoxes = document.querySelectorAll('.box-row');
         const allFolders = document.querySelectorAll('.folder-row');
-        
         if(!k) {
             allBoxes.forEach(el => el.style.display = 'flex');
             allFolders.forEach(el => el.style.display = 'flex');
             return;
         }
-        
-        // 隐藏所有
         allBoxes.forEach(el => el.style.display = 'none');
         allFolders.forEach(el => el.style.display = 'none');
 
-        // 筛选逻辑
         DB.forEach(b => {
-            // 匹配盒子名称
             if(b.n.toLowerCase().includes(k)) {
                 const btn = document.getElementById(`btn-${b.id}`);
                 if(btn) {
                     btn.style.display = 'flex';
-                    // 递归展开父级
                     let parent = btn.parentElement; 
                     while(parent && parent.id !== 'treeRoot') {
                         if(parent.classList.contains('folder-cnt')) {
-                            parent.style.display = 'block'; 
-                            parent.classList.add('open');
+                            parent.style.display = 'block'; parent.classList.add('open');
                             const fDiv = parent.parentElement;
                             const tDiv = fDiv.querySelector('.folder-row');
                             if(tDiv) { tDiv.style.display = 'flex'; tDiv.classList.add('expanded'); }
@@ -415,66 +478,44 @@
                 }
             }
         });
-        
-        // 同时也对当前网格内数据高亮
         document.querySelectorAll('.cell').forEach(el => {
             if(el.classList.contains('empty')) return;
             el.classList.remove('dim','hi');
-            if(el.dataset.txt && el.dataset.txt.includes(k)) el.classList.add('hi'); 
-            else el.classList.add('dim');
+            if(el.dataset.txt && el.dataset.txt.includes(k)) el.classList.add('hi'); else el.classList.add('dim');
         });
     });
 
     function renderLegend() {
         const d = document.getElementById('legend');
         d.innerHTML = `<div class="leg-title">${UI.legend || "Legend"}</div>`;
-        
-        // 渲染状态颜色
         let html = `<div class="leg-grid">`;
         if(CL.st) {
             const stMap = UI.st_txt || {0:"In Stock", 1:"Removed", 2:"Discarded"};
-            for(let k in CL.st) {
-                html += `<div class="leg-item"><div class="dot" style="background:${CL.st[k]}"></div>${stMap[k]||k}</div>`;
-            }
+            for(let k in CL.st) html += `<div class="leg-item"><div class="dot" style="background:${CL.st[k]}"></div>${stMap[k]||k}</div>`;
         }
-        // 渲染类型颜色
         if(CL.types) {
-            for(let [k,v] of Object.entries(CL.types)) {
-                html += `<div class="leg-item"><div class="dot" style="background:${v}"></div>${k}</div>`;
-            }
+            for(let [k,v] of Object.entries(CL.types)) html += `<div class="leg-item"><div class="dot" style="background:${v}"></div>${k}</div>`;
         }
         html += `</div>`;
         d.innerHTML += html;
     }
 
-    function createAxis(t) { 
-        const e=document.createElement('div'); 
-        e.className='axis'; 
-        e.textContent=t; 
-        return e; 
-    }
+    function createAxis(t) { const e=document.createElement('div'); e.className='axis'; e.textContent=t; return e; }
 
     function loadBox(bid) {
         curBox = DB.find(b => b.id === bid);
         if(!curBox) return;
         
-        // 激活状态
         document.querySelectorAll('.box-row').forEach(e => e.classList.remove('active'));
         const activeBtn = document.getElementById(`btn-${bid}`);
         if(activeBtn) activeBtn.classList.add('active');
         
         document.getElementById('vTitle').textContent = curBox.n;
         
-        // 构建 Map 方便查找
         const map = new Map();
         let lowList = [];
-        
-        // V17/V18 数据结构映射
-        // [r, c, name, type, st, feat, short, vol, vm, op, dt, desc, res, warn]
         curBox.d.forEach(item => {
             map.set(`${item[0]},${item[1]}`, item);
-            
-            // 警告统计 logic: st==0(在库), vm>0, vol/vm < 0.1
             const st = item[4], vol = item[7], vm = item[8];
             if(st === 0 && vm > 0 && (vol/vm) < 0.1) {
                 const coord = String.fromCharCode(65+item[0]) + (item[1]+1);
@@ -482,7 +523,6 @@
             }
         });
         
-        // 元数据和警告显示
         let metaTxt = (UI.meta_fmt || "{s} • {c} Items").replace("{s}", curBox.s).replace("{c}", curBox.d.length + "");
         let warnHtml = "";
         if(lowList.length > 0) {
@@ -492,7 +532,6 @@
         }
         document.getElementById('vMeta').innerHTML = metaTxt + warnHtml;
 
-        // 渲染网格
         let R=9, C=9;
         try { [R, C] = curBox.s.split('x').map(Number); } catch(e){}
         const grid = document.getElementById('grid');
@@ -500,7 +539,6 @@
         grid.style.gap = "var(--gap)";
         grid.innerHTML = '';
 
-        // 坐标轴
         grid.appendChild(createAxis("")); 
         for(let c=1; c<=C; c++) grid.appendChild(createAxis(c));
 
@@ -511,33 +549,20 @@
                 const item = map.get(`${r},${c}`);
                 
                 if(item) {
-                    // === 关键修复：数组解构顺序 ===
                     const [row, col, name, type, st, feat, short, vol, vm, op, dt, desc, res, warn] = item;
                     
                     el.className = `cell s-${st}`;
-                    // 颜色配置
-                    const stColor = (CL.st && CL.st[st]) ? CL.st[st] : null;
-                    if(stColor) el.style.backgroundColor = stColor;
                     
-                    // 圆环 (Volume Ring)
                     let ring = '';
                     if(vm > 0) {
-                        let deg = (vol/vm)*360; 
-                        if(isNaN(deg)) deg=0;
-                        // 如果在库且容量极低，圆环变红
+                        let deg = (vol/vm)*360; if(isNaN(deg)) deg=0;
                         let isCrit = (st===0 && (vol/vm)<0.1);
                         let rc = isCrit ? 'var(--warn)' : 'rgba(0,0,0,0.7)';
                         ring = `<div class="ring" style="background:conic-gradient(${rc} 0deg ${deg}deg, var(--ring-bg) ${deg}deg 360deg)"></div>`;
-                    } else { 
-                        ring = `<div class="ring"></div>`; 
-                    }
+                    } else { ring = `<div class="ring"></div>`; }
                     
-                    // 核心颜色
-                    let typeColor = (CL.types && CL.types[type]) ? CL.types[type] : '#888';
-                    // 显示文字：优先 short，否则 name
+                    let typeColor = (CL.types && CL.types[type]) ? CL.types[type] : '#94A3B8';
                     let txt = (short && short.trim()) ? short : name;
-                    
-                    // 警告标记
                     let warnTag = (st===0 && vm>0 && (vol/vm)<0.1) ? `<div class="warn">!</div>` : '';
                     
                     el.innerHTML = `
@@ -549,49 +574,40 @@
                     `;
                     el.onclick = () => showM(item, String.fromCharCode(65+r)+(c+1));
                     el.dataset.txt = (name+(short||"")+type+feat+(res||"")).toLowerCase();
-                } else { 
-                    el.className = 'cell empty'; 
-                }
+                } else { el.className = 'cell empty'; }
                 grid.appendChild(el);
             }
         }
     }
 
     function showM(i, coord) {
-        // === 关键修复：弹窗数据映射 ===
         const [row, col, name, type, st, feat, short, vol, vm, op, dt, desc, res, warn] = i;
         
-        // 标题区
         document.getElementById('mCoord').textContent = coord;
-        document.getElementById('mCoord').style.backgroundColor = (CL.types && CL.types[type]) ? CL.types[type] : '#888';
+        document.getElementById('mCoord').style.backgroundColor = (CL.types && CL.types[type]) ? CL.types[type] : '#94A3B8';
         document.getElementById('mName').textContent = name;
         document.getElementById('mType').textContent = type + (short ? ` (${short})` : '');
         
-        // 警告区
         const wBox = document.getElementById('mWarn');
         if(st===0 && vm>0 && (vol/vm)<0.1) {
             wBox.style.display = 'flex';
             let label = UI.txt_low || "Low Volume";
-            wBox.innerHTML = `<div style="margin-right:10px;font-size:18px">⚠️</div><div><div style="font-weight:bold;margin-bottom:2px">${label}</div>${vol} / ${vm} µL</div>`;
+            wBox.innerHTML = `<div style="margin-right:12px;font-size:20px">⚠️</div><div><div style="font-weight:bold;margin-bottom:2px">${label}</div>${vol} / ${vm} µL</div>`;
         } else { wBox.style.display = 'none'; }
 
-        // 字段区
         const stEl = document.getElementById('mStatus');
         const stTxt = (UI.st_txt && UI.st_txt[st]) ? UI.st_txt[st] : (st===0?"In Stock":st===1?"Removed":"Discarded");
         stEl.textContent = stTxt;
-        // 状态文字颜色
-        stEl.style.color = (st===0?'var(--text)':(st===1?'#E65100':'#C62828'));
+        stEl.style.color = (st===0?'var(--text)':(st===1?'var(--warn)':'var(--sub)'));
         
         document.getElementById('mOp').textContent = op || '-';
         document.getElementById('mDate').textContent = dt || '-';
         document.getElementById('mVol').textContent = vm>0 ? `${vol} / ${vm} μL` : '-';
         
-        // 标签区 (Feature + Resistance)
         const tags = document.getElementById('mTags'); 
         tags.innerHTML = '';
-        if(feat) tags.innerHTML += `<span class="tag" style="border-color:var(--primary);color:var(--primary);background:var(--primary-bg)">🧬 ${feat}</span>`;
+        if(feat) tags.innerHTML += `<span class="tag" style="border-color:var(--primary);color:var(--primary);background:rgba(59,130,246,0.1)">🧬 ${feat}</span>`;
         if(res) {
-            // 支持 JSON 格式抗性或普通逗号分隔
             if(res.startsWith('[')) {
                 try {
                     JSON.parse(res).forEach(r => tags.innerHTML+=`<span class="tag">💊 ${r.name}</span>`);
@@ -601,11 +617,9 @@
             }
         }
         
-        // 备注区
         const dBox = document.getElementById('mDesc');
         if(desc) { dBox.style.display='block'; dBox.textContent=desc; } else dBox.style.display='none';
         
-        // 显示
         document.querySelector('.m-mask').classList.add('show');
         document.querySelector('.modal').classList.add('show');
     }
