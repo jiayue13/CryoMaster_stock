@@ -7,47 +7,40 @@
     <title>CryoMaster View</title>
     <script src="https://unpkg.com/fflate@0.8.0"></script>
     <style>
-        /* === 变量定义 (V25 视觉降噪版) === */
+        /* === 变量定义 (V26 极速性能版) === */
         :root {
-            /* 1. 环境氛围 */
             --bg-gradient: linear-gradient(135deg, #F6F9FC 0%, #EBF1F5 100%);
             --card-bg: rgba(255, 255, 255, 0.75);
             --sidebar-bg: rgba(255, 255, 255, 0.85);
             
             --text: #1E293B; 
             --sub: #64748B;
-            --border: rgba(0, 0, 0, 0.06); /* 边框更淡 */
+            --border: rgba(0, 0, 0, 0.08);
             
             --primary: #3B82F6; 
             --primary-fade: rgba(59, 130, 246, 0.12); 
             --warn: #EF4444;
-            --hover: rgba(0, 0, 0, 0.04);
+            --hover: rgba(0, 0, 0, 0.03);
             
-            /* 2. 孔位基础 */
-            --cell-size: 80px; 
+            /* 孔位基础 */
+            --cell-size: 64px; 
             --gap: 10px;
-            --cell-bd-width: 3px;
+            --cell-bd-width: 2px;
             --cell-bd-col: #CBD5E1; 
-            
-            /* [修改] 投影逻辑 */
-            --cell-shadow: 0 2px 5px rgba(0,0,0,0.03); /* 实孔位：凸起投影 */
-            
-            /* [新增] 空孔位专用样式 (凹槽风格) */
-            --empty-shadow: inset 0 1px 3px rgba(0,0,0,0.06); /* 凹陷内阴影 */
-            --empty-bg: rgba(0,0,0,0.03); /* 极淡的填充色 */
+            --cell-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            --empty-shadow: inset 0 1px 3px rgba(0,0,0,0.06);
+            --empty-bg: rgba(0,0,0,0.03);
             
             --ring-bg: rgba(0,0,0,0.08);
             
-            /* 3. 状态颜色 */
+            /* 状态色 */
             --st-0: #E8F5E9; 
             --st-1: #FFF3E0; 
             --st-2: #FFEBEE;
             
             --shadow: 0 1px 3px rgba(0,0,0,0.05);
             --glow: rgba(59, 130, 246, 0.15);
-            
-            /* [修改] 坐标轴颜色：稍微淡一点，不抢视觉 */
-            --axis-col: #64748B; 
+            --axis-col: #64748B;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -57,16 +50,14 @@
                 --sidebar-bg: rgba(15, 23, 42, 0.80);
                 --text: #F1F5F9; 
                 --sub: #94A3B8;
-                --border: rgba(255, 255, 255, 0.08);
+                --border: rgba(255, 255, 255, 0.1);
                 --primary: #60A5FA; 
                 --primary-fade: rgba(96, 165, 250, 0.2);
                 --warn: #F87171;
                 --hover: rgba(255, 255, 255, 0.05);
                 
                 --cell-bd-col: #475569;
-                
                 --cell-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                /* Dark模式凹槽 */
                 --empty-shadow: inset 0 1px 3px rgba(0,0,0,0.3); 
                 --empty-bg: rgba(255,255,255,0.03); 
 
@@ -92,7 +83,7 @@
             overflow: hidden; 
         }
 
-        /* 侧边栏 */
+        /* PC端侧边栏 (保持高级感) */
         .sidebar { 
             width: 300px; 
             background: var(--sidebar-bg); 
@@ -151,8 +142,9 @@
         .leg-item { display: flex; align-items: center; font-size: 12px; color: var(--sub); width: 48%; }
         .dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; box-shadow: 0 0 0 1px var(--border);}
 
-        .main { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; }
+        .main { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; overflow: hidden; }
         
+        /* 顶部栏 */
         .header { 
             padding: 0 20px;
             background: var(--card-bg); 
@@ -175,7 +167,23 @@
         .h-sub { font-size: 12px; color: var(--sub); margin-top: 2px; display: flex; align-items: center; }
         .header-warn { color: var(--warn); font-weight: 700; margin-left: 8px; font-size: 11px; display: flex; align-items: center; background: rgba(239,68,68,0.1); padding: 2px 8px; border-radius: 20px; }
 
-        .grid-vp { flex: 1; overflow: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; cursor: grab; position: relative; }
+        /* === [重要优化] 滚动视口 === */
+        .grid-vp { 
+            flex: 1; 
+            overflow: auto; /* 允许滚动 */
+            padding: 40px; 
+            display: flex; 
+            /* PC端居中，移动端靠左以允许横向滚动 */
+            justify-content: center; 
+            align-items: flex-start; 
+            cursor: grab; 
+            position: relative;
+            
+            /* 启用 iOS 原生惯性滚动 */
+            -webkit-overflow-scrolling: touch; 
+            /* 告知浏览器此区域处理触摸动作，提高流畅度 */
+            touch-action: pan-x pan-y; 
+        }
         .grid-vp.active { cursor: grabbing; }
         
         /* 网格容器 */
@@ -188,6 +196,8 @@
             box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.1);
             margin-bottom: 60px; 
             position: relative;
+            /* 防止 flex 容器挤压网格，确保能滚动 */
+            flex-shrink: 0; 
         }
         .grid::before {
             content: ""; position: absolute; inset: -20px; z-index: -1;
@@ -199,11 +209,11 @@
             display: flex; align-items: center; justify-content: center; 
             font-size: 12px; font-weight: 700; 
             color: var(--axis-col); 
-            opacity: 0.8; /* 降低不透明度 */
+            opacity: 0.8; 
             user-select: none; font-family: ui-monospace, monospace;
         }
 
-        /* 盒子样式 */
+        /* 盒子样式 (PC端带阴影) */
         .cell { 
             width: var(--cell-size); height: var(--cell-size); 
             border-radius: 12px; 
@@ -223,13 +233,12 @@
         .cell:hover { transform: scale(1.05); z-index: 5; border-color: var(--primary) !important; }
         .cell:active { transform: scale(0.95); }
         
-        /* === [关键] 空孔位样式 (凹槽风格) === */
+        /* 凹槽空孔位 */
         .cell.empty { 
-            border: none;  /* 去掉虚线 */
-            background: var(--empty-bg);  /* 淡色填充 */
-            box-shadow: var(--empty-shadow); /* 内阴影 */
-            opacity: 1; /* 保持可见 */
-            pointer-events: none; 
+            border: none; 
+            background: var(--empty-bg); 
+            box-shadow: var(--empty-shadow); 
+            opacity: 1; pointer-events: none; 
         }
 
         .ring { position: absolute; inset: 4px; border-radius: 50%; z-index: 1; background: var(--ring-bg); }
@@ -242,17 +251,19 @@
         .cell.dim { opacity: 0.15; filter: grayscale(100%); }
         .cell.hi { transform: scale(1.15); z-index: 10; border-color: var(--primary) !important; box-shadow: 0 0 0 3px var(--primary-fade); }
 
+        /* === [核心优化] 移动端极速模式 (Max Width 768px) === */
         @media (max-width: 768px) {
+            /* 1. 侧边栏：抽屉模式 */
             .sidebar { 
-                position: fixed; 
-                height: 100%; 
-                top: 0; left: 0; bottom: 0;
+                position: fixed; top: 0; left: 0; bottom: 0;
                 transform: translateX(-100%); 
                 width: 85%; max-width: 320px; 
                 box-shadow: 10px 0 30px rgba(0,0,0,0.2); 
-                border-right: none;
-                z-index: 1000;
+                border-right: none; z-index: 1000;
                 transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                /* 移动端禁用毛玻璃，改用纯色背景提升性能 */
+                backdrop-filter: none; -webkit-backdrop-filter: none;
+                background: var(--card); /* 使用不透明背景 */
             }
             .sidebar.show { transform: translateX(0); }
             body.pc-collapsed .sidebar { width: 85%; } 
@@ -260,16 +271,53 @@
             .overlay { 
                 display: none; position: fixed; inset:0; 
                 background: rgba(0,0,0,0.4); z-index: 900;
-                backdrop-filter: blur(2px); 
+                /* 移除移动端遮罩的毛玻璃 */
+                backdrop-filter: none; 
             }
             .overlay.show { display: block; }
             
-            .grid-vp { padding: 10px; align-items: flex-start; }
-            :root { --cell-size: 44px; --gap: 6px; }
+            /* 2. 滚动区域优化 */
+            .grid-vp { 
+                padding: 10px; 
+                /* 靠左对齐，确保右侧内容可以通过滚动看到 */
+                justify-content: flex-start; 
+                /* 强制 GPU 加速 */
+                will-change: transform;
+            }
+            
+            /* 3. 网格性能降级 */
+            .grid { 
+                padding: 10px; border-radius: 12px; 
+                /* 移除昂贵的特效 */
+                backdrop-filter: none; 
+                box-shadow: none; 
+                border: 1px solid var(--border);
+                background: var(--card); /* 纯色 */
+            }
+            .grid::before { display: none; } /* 移除光晕 */
+
+            :root { --cell-size: 42px; --gap: 4px; }
+            
+            /* 4. 盒子性能降级 (扁平化) */
+            .cell {
+                border-radius: 6px;
+                box-shadow: none !important; /* 强制移除阴影 */
+                transition: none; /* 移除过渡动画，滑动更跟手 */
+            }
+            .cell.empty {
+                background: rgba(0,0,0,0.02);
+                box-shadow: none; /* 移除凹槽阴影 */
+                border: 1px solid rgba(0,0,0,0.05); /* 改为极淡的边框 */
+            }
+            .core { box-shadow: none; inset: 4px; }
+            .ring { inset: 1px; } /* 简化圆环 */
+            .warn { box-shadow: none; border-width: 2px; }
+
             .t-main { font-size: 10px; } .t-sub { display: none; }
-            .core { inset: 5px; } .ring { inset: 2px; }
             .h-tit { max-width: 180px; font-size: 18px; }
-            .grid { padding: 12px; border-radius: 16px; }
+            
+            /* 顶部栏降级 */
+            .header { backdrop-filter: none; background: var(--card); }
         }
 
         .m-mask { position: fixed; inset:0; background: rgba(0,0,0,0.3); z-index: 99; display: none; backdrop-filter: blur(5px); }
@@ -280,7 +328,7 @@
             backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
             border-radius: 24px 24px 0 0; 
             padding: 24px; z-index: 1100; 
-            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); 
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); 
             box-shadow: 0 -10px 40px rgba(0,0,0,0.1); 
             color: var(--text); border-top: 1px solid var(--border); 
             max-height: 85vh; overflow-y: auto; 
@@ -350,12 +398,15 @@
     const vp = document.getElementById('vp');
     let isDown=false, sX, sY, sL, sT;
     
-    vp.addEventListener('mousedown', e => { isDown=true; vp.classList.add('active'); sX=e.pageX-vp.offsetLeft; sY=e.pageY-vp.offsetTop; sL=vp.scrollLeft; sT=vp.scrollTop; });
-    vp.addEventListener('mouseleave', () => { isDown=false; vp.classList.remove('active'); });
-    vp.addEventListener('mouseup', () => { isDown=false; vp.classList.remove('active'); });
-    vp.addEventListener('mousemove', e => { if(!isDown)return; e.preventDefault(); const x=e.pageX-vp.offsetLeft; const y=e.pageY-vp.offsetTop; vp.scrollLeft=sL-(x-sX)*1.5; vp.scrollTop=sT-(y-sY)*1.5; });
+    // PC端鼠标拖拽 (仅非触摸屏启用)
+    if (window.matchMedia("(hover: hover)").matches) {
+        vp.addEventListener('mousedown', e => { isDown=true; vp.classList.add('active'); sX=e.pageX-vp.offsetLeft; sY=e.pageY-vp.offsetTop; sL=vp.scrollLeft; sT=vp.scrollTop; });
+        vp.addEventListener('mouseleave', () => { isDown=false; vp.classList.remove('active'); });
+        vp.addEventListener('mouseup', () => { isDown=false; vp.classList.remove('active'); });
+        vp.addEventListener('mousemove', e => { if(!isDown)return; e.preventDefault(); const x=e.pageX-vp.offsetLeft; const y=e.pageY-vp.offsetTop; vp.scrollLeft=sL-(x-sX)*1.5; vp.scrollTop=sT-(y-sY)*1.5; });
+    }
 
-    // === 移动端手势滑动 ===
+    // 移动端手势滑动侧边栏
     let touchStartX = 0;
     let touchEndX = 0;
     const sidebarEl = document.getElementById('sidebar');
