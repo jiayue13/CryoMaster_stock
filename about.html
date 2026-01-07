@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryoMaster Pro - 智能冻存盒管理系统</title>
+    
+    <!-- 外部资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2A7F62',       // 学术绿
+                        'primary-light': '#E6F4EF',
+                        'primary-dark': '#1F634C',
+                        secondary: '#4A90E2',     
+                        'secondary-light': '#EBF3FD',
+                        accent: '#E5704B',        
+                        warning: '#F5A623',       
+                        'warning-light': '#FFF4E0',
+                        'gray-academic': {
+                            50: '#F8FAF9',
+                            100: '#F1F5F3',
+                            200: '#E4EAE7',
+                            300: '#CBD5CE',
+                            400: '#AAB8AF',
+                            500: '#8A9990',
+                            600: '#6B7870',
+                            700: '#4C574F',
+                            800: '#2D352F',
+                            900: '#1A1F1C',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Plus Jakarta Sans', 'Noto Sans SC', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        'academic': '8px',          
+                        'academic-lg': '12px',       
+                        'academic-xl': '16px',       
+                    },
+                    boxShadow: {
+                        'academic-sm': '0 1px 3px rgba(0, 0, 0, 0.05)',
+                        'academic': '0 4px 12px rgba(42, 127, 98, 0.08)',
+                        'academic-lg': '0 8px 24px rgba(42, 127, 98, 0.1)',
+                        'academic-hover': '0 8px 28px rgba(42, 127, 98, 0.12)',
+                    },
+                    animation: {
+                        'float': 'float 8s ease-in-out infinite', 
+                        'gradient': 'gradient 18s ease infinite',
+                        'ripple': 'ripple 1.5s ease-out infinite',
+                        'fade-in': 'fadeIn 0.8s ease-out forwards',
+                        'pulse-soft': 'pulseSoft 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        gradient: {
+                            '0%, 100%': { backgroundPosition: '0% 50%' },
+                            '50%': { backgroundPosition: '100% 50%' },
+                        },
+                        ripple: {
+                            '0%': { transform: 'scale(0.8)', opacity: 1 },
+                            '100%': { transform: 'scale(2.5)', opacity: 0 },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: 0, transform: 'translateY(20px)' },
+                            '100%': { opacity: 1, transform: 'translateY(0)' },
+                        },
+                        pulseSoft: {
+                            '0%, 100%': { opacity: 1 },
+                            '50%': { opacity: 0.8 },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        html { 
+            scroll-behavior: smooth; 
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        body {
+            color: #1A1F1C;
+            line-height: 1.6;
+        }
+        
+        /* 渐变文字 */
+        .gradient-text {
+            background: linear-gradient(135deg, #2A7F62 0%, #4A90E2 50%, #2A7F62 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient 12s ease infinite;
+        }
+        
+        /* 英雄区背景 */
+        .hero-bg {
+            background: 
+                radial-gradient(ellipse at 20% 50%, rgba(42, 127, 98, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(74, 144, 226, 0.03) 0%, transparent 40%),
+                linear-gradient(180deg, #FFFFFF 0%, #F8FAF9 100%);
+            position: relative;
+        }
+        
+        /* 网格背景叠加层 */
+        .hero-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(to right, rgba(42, 127, 98, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(42, 127, 98, 0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: 0;
+            animation: gridMove 30s linear infinite;
+            opacity: 0.8;
+        }
+        
+        @keyframes gridMove {
+            0% { backgroundPosition: 0 0; }
+            100% { backgroundPosition: 60px 60px; }
+        }
+        
+        /* 学术卡片样式 */
+        .academic-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(42, 127, 98, 0.08);
+            box-shadow: 0 6px 20px rgba(42, 127, 98, 0.05);
+            transition: all 0.4s ease;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .academic-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, #2A7F62, #4A90E2);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .academic-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(42, 127, 98, 0.1);
+            border-color: rgba(42, 127, 98, 0.15);
+        }
+        
+        .academic-card:hover::after {
+            opacity: 1;
+        }
+        
+        /* 功能卡片样式 */
+        .feature-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            border: 1px solid #F1F5F3;
+            position: relative;
+            overflow: hidden;
+            background: #FFFFFF;
+            border-radius: 12px;
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(42, 127, 98, 0.02), transparent);
+            transition: all 0.8s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(42, 127, 98, 0.08);
+            border-color: #E6F4EF;
+        }
+        
+        .feature-card:hover::before {
+            left: 100%;
+        }
+        
+        /* 窗口样式 */
+        .academic-window {
+            border-radius: 16px;
+            box-shadow: 
+                0 8px 25px rgba(42, 127, 98, 0.06),
+                0 2px 8px rgba(0, 0, 0, 0.02),
+                inset 0 1px 0 rgba(255, 255, 255, 0.98);
+            overflow: hidden;
+            background: #FFFFFF;
+            border: 1px solid #F1F5F3;
+            transition: all 0.5s ease;
+            position: relative;
+        }
+        
+        .academic-window::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, rgba(42, 127, 98, 0.03) 0%, transparent 70%);
+            border-radius: 0 16px 0 100%;
+            z-index: 0;
+        }
+        
+        .academic-window:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 12px 35px rgba(42, 127, 98, 0.09),
+                0 2px 8px rgba(0, 0, 0, 0.02);
+        }
+        
+        /* 窗口标题栏 */
+        .window-titlebar {
+            background: #F8FAF9;
+            border-bottom: 1px solid #E4EAE7;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 功能图标 */
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(42, 127, 98, 0.06), rgba(42, 127, 98, 0.01));
+            box-shadow: 0 3px 10px rgba(42, 127, 98, 0.06);
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(42, 127, 98, 0.06);
+            transition: all 0.3s ease;
+        }
+        
+        .feature-icon:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, rgba(42, 127, 98, 0.09), rgba(42, 127, 98, 0.03));
+        }
+
+        /* Logo样式 - 固定指定图床图片 */
+        .app-logo {
+            width: 90px;
+            height: 90px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: float 8s ease-in-out infinite, pulse-soft 3s ease-in-out infinite;
+            box-shadow: 0 6px 20px rgba(42, 127, 98, 0.15);
+            margin: 0 auto;
+            object-fit: contain;
+            background: #FFFFFF;
+        }
+        
+        /* 按钮样式 */
+        .btn-academic {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        
+        .btn-academic:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(42, 127, 98, 0.1);
+        }
+
+        .btn-academic::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease, opacity 0.6s ease;
+        }
+
+        .btn-academic:active::after {
+            width: 300px;
+            height: 300px;
+            opacity: 0;
+        }
+        
+        /* 网格单元格样式 */
+        .grid-cell {
+            transition: all 0.2s ease;
+            border: 1px solid #F1F5F3;
+            cursor: pointer;
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .grid-cell::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(42, 127, 98, 0.01), rgba(74, 144, 226, 0.01));
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .grid-cell:hover {
+            background-color: #E6F4EF;
+            transform: scale(1.03);
+            border-color: #2A7F62;
+            z-index: 10;
+        }
+        
+        .grid-cell:hover::after {
+            opacity: 1;
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #F1F5F3;
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #CBD5CE;
+            border-radius: 3px;
+            transition: background 0.2s ease;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #AAB8AF;
+        }
+        
+        /* 分隔线样式 */
+        .academic-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(42, 127, 98, 0.2), transparent);
+            width: 80%;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .academic-divider::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 10px;
+            background: white;
+        }
+        
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 280px;
+            background: #F8FAF9;
+            border-right: 1px solid #E4EAE7;
+            overflow-y: auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* 样本信息卡片 */
+        .sample-info-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #E6F4EF;
+            box-shadow: 0 2px 8px rgba(42, 127, 98, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        /* 语言切换按钮 */
+        .lang-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 999;
+            background: white;
+            border: 1px solid #E4EAE7;
+            border-radius: 24px;
+            padding: 6px 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+        
+        .lang-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        /* 输入框焦点样式 */
+        input:focus, select:focus, textarea:focus {
+            transition: all 0.2s ease;
+            border-color: #2A7F62 !important;
+            box-shadow: 0 0 0 3px rgba(42, 127, 98, 0.1) !important;
+        }
+        
+        /* 状态标签样式 */
+        .status-badge {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .status-badge::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.8s ease;
+        }
+        
+        .status-badge:hover::after {
+            transform: translateX(100%);
+        }
+
+        /* 隐藏元素样式 */
+        .lang-zh, .lang-en {
+            display: none;
+        }
+        
+        .lang-active {
+            display: inline;
+        }
+        
+        .block-lang-zh, .block-lang-en {
+            display: none;
+        }
+        
+        .block-lang-active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-academic-50">
+    <!-- 语言切换按钮 -->
+    <div class="lang-toggle" id="langToggle">
+        <span class="lang-zh lang-active">English</span>
+        <span class="lang-en">中文</span>
+    </div>
+
+    <!-- 头部英雄区 -->
+    <header class="hero-bg min-h-screen flex flex-col items-center justify-center px-4 py-20 relative overflow-hidden">
+        <!-- Logo展示 - 固定使用指定图床图片 -->
+        <div class="mb-8 z-10" data-aos="zoom-in">
+            <img src="https://youke3.picui.cn/s1/2026/01/06/695cb14e83070.png" alt="CryoMaster Pro Logo" class="app-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <!-- Logo加载失败备用（保持原设计风格） -->
+            <div class="app-logo hidden bg-white text-primary text-3xl font-bold font-display">
+                CryoMaster Pro
+            </div>
+        </div>
+        
+        <!-- 主标题 -->
+        <h1 class="text-[clamp(2.2rem,5vw,3.8rem)] font-bold text-center gradient-text mb-4 z-10 font-display" data-aos="fade-up">
+            CryoMaster Pro
+        </h1>
+        <p class="text-[clamp(1.1rem,3vw,1.6rem)] text-gray-academic-700 text-center max-w-3xl mb-16 z-10" data-aos="fade-up" data-aos-delay="200">
+            <span class="block-lang-zh block-lang-active">智能冻存盒管理系统 | 高效管理生物样本，提升实验室工作效率</span>
+            <span class="block-lang-en">Intelligent Cryogenic Storage Management System | Streamline sample management, boost lab productivity</span>
+        </p>
+
+        <!-- 核心功能快速入口 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-5 max-w-6xl w-full mb-18 z-10" data-aos="slide-up" data-aos-delay="400">
+            <div class="academic-card p-6 text-center">
+                <div class="feature-icon mx-auto">
+                    <i class="fa-solid fa-file-import text-2xl text-primary"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2 font-display">
+                    <span class="lang-zh lang-active">批量导入</span>
+                    <span class="lang-en">Bulk Import</span>
+                </h3>
+                <p class="text-sm text-gray-academic-600">
+                    <span class="block-lang-zh block-lang-active">多格式快速录入样本信息</span>
+                    <span class="block-lang-en">Multi-format sample information entry</span>
+                </p>
+            </div>
+            <div class="academic-card p-6 text-center">
+                <div class="feature-icon mx-auto">
+                    <i class="fa-solid fa-rotate-left text-2xl text-primary"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2 font-display">
+                    <span class="lang-zh lang-active">撤销/重做</span>
+                    <span class="lang-en">Undo/Redo</span>
+                </h3>
+                <p class="text-sm text-gray-academic-600">
+                    <span class="block-lang-zh block-lang-active">完整操作历史记录管理</span>
+                    <span class="block-lang-en">Complete operation history management</span>
+                </p>
+            </div>
+            <div class="academic-card p-6 text-center">
+                <div class="feature-icon mx-auto">
+                    <i class="fa-solid fa-shield-halved text-2xl text-primary"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2 font-display">
+                    <span class="lang-zh lang-active">自动备份</span>
+                    <span class="lang-en">Auto Backup</span>
+                </h3>
+                <p class="text-sm text-gray-academic-600">
+                    <span class="block-lang-zh block-lang-active">定时备份保障数据安全</span>
+                    <span class="block-lang-en">Scheduled backups for data security</span>
+                </p>
+            </div>
+            <div class="academic-card p-6 text-center">
+                <div class="feature-icon mx-auto">
+                    <i class="fa-solid fa-keyboard text-2xl text-primary"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2 font-display">
+                    <span class="lang-zh lang-active">快捷键操作</span>
+                    <span class="lang-en">Shortcuts</span>
+                </h3>
+                <p class="text-sm text-gray-academic-600">
+                    <span class="block-lang-zh block-lang-active">提升日常操作效率</span>
+                    <span class="block-lang-en">Enhance daily operation efficiency</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- 软件界面预览 -->
+        <div class="max-w-5xl w-full academic-window" data-aos="zoom-in" data-aos-delay="600">
+            <div class="window-titlebar py-3 px-4 flex items-center">
+                <div class="flex gap-2">
+                    <div class="w-3 h-3 rounded-full bg-accent"></div>
+                    <div class="w-3 h-3 rounded-full bg-warning"></div>
+                    <div class="w-3 h-3 rounded-full bg-primary"></div>
+                </div>
+                <div class="ml-4 text-sm text-gray-academic-600 font-medium">
+                    <span class="lang-zh lang-active">CryoMaster Pro - 智能冻存盒管理系统 v1.0</span>
+                    <span class="lang-en">CryoMaster Pro - v1.0</span>
+                </div>
+                <div class="ml-auto text-xs text-gray-academic-500">
+                    <i class="fa-solid fa-save mr-1"></i>
+                    <span class="lang-zh lang-active">自动备份已开启 | 上次备份: 2025-01-06 10:30</span>
+                    <span class="lang-en">Auto backup enabled | Last backup: 2025-01-06 10:30</span>
+                </div>
+            </div>
+            
+            <!-- 侧边栏布局 -->
+            <div class="flex flex-col md:flex-row">
+                <!-- 侧边栏 -->
+                <div class="sidebar p-4 md:h-[600px]">
+                    <!-- 冻存盒列表 -->
+                    <div class="mb-6">
+                        <h4 class="font-medium text-sm mb-3 text-gray-academic-800 flex items-center">
+                            <i class="fa-solid fa-boxes-stacked mr-2 text-primary"></i>
+                            <span class="lang-zh lang-active">冻存盒列表</span>
+                            <span class="lang-en">Storage Box List</span>
+                        </h4>
+                        <div class="space-y-2">
+                            <div class="bg-primary-light text-primary px-3 py-2 rounded-academic text-xs font-medium cursor-pointer">
+                                <span class="lang-zh lang-active">冻存盒 #20250106</span>
+                                <span class="lang-en">Storage Box #20250106</span>
+                                <i class="fa-solid fa-check ml-2 text-xs"></i>
+                            </div>
+                            <div class="bg-gray-academic-100 text-gray-academic-700 px-3 py-2 rounded-academic text-xs cursor-pointer hover:bg-gray-academic-200 transition-colors">
+                                <span class="lang-zh lang-active">冻存盒 #20250105</span>
+                                <span class="lang-en">Storage Box #20250105</span>
+                            </div>
+                            <div class="bg-gray-academic-100 text-gray-academic-700 px-3 py-2 rounded-academic text-xs cursor-pointer hover:bg-gray-academic-200 transition-colors">
+                                <span class="lang-zh lang-active">冻存盒 #20250104</span>
+                                <span class="lang-en">Storage Box #20250104</span>
+                            </div>
+                            <div class="bg-gray-academic-100 text-gray-academic-700 px-3 py-2 rounded-academic text-xs cursor-pointer hover:bg-gray-academic-200 transition-colors">
+                                <i class="fa-solid fa-plus mr-1 text-primary"></i>
+                                <span class="lang-zh lang-active">新建冻存盒</span>
+                                <span class="lang-en">Create New Box</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 选中样本信息 -->
+                    <div class="mb-6">
+                        <h4 class="font-medium text-sm mb-3 text-gray-academic-800 flex items-center">
+                            <i class="fa-solid fa-vial-circle-check mr-2 text-primary"></i>
+                            <span class="lang-zh lang-active">选中样品信息</span>
+                            <span class="lang-en">Selected Sample Info</span>
+                        </h4>
+                        <div class="sample-info-card p-4">
+                            <div class="text-xs text-gray-academic-500 mb-2">
+                                <span class="lang-zh lang-active">当前选中: </span>
+                                <span class="lang-en">Selected: </span>
+                                <span class="text-primary font-medium">A1 (Sample A-001)</span>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-academic-600">
+                                        <span class="lang-zh lang-active">样本ID:</span>
+                                        <span class="lang-en">Sample ID:</span>
+                                    </span>
+                                    <span class="font-medium">A-001-2025</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-academic-600">
+                                        <span class="lang-zh lang-active">样本类型:</span>
+                                        <span class="lang-en">Sample Type:</span>
+                                    </span>
+                                    <span class="font-medium">
+                                        <span class="lang-zh lang-active">细胞系</span>
+                                        <span class="lang-en">Cell Line</span>
+                                    </span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-academic-600">
+                                        <span class="lang-zh lang-active">冻存日期:</span>
+                                        <span class="lang-en">Storage Date:</span>
+                                    </span>
+                                    <span class="font-medium">2025-01-01</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-academic-600">
+                                        <span class="lang-zh lang-active">冻存位置:</span>
+                                        <span class="lang-en">Storage Location:</span>
+                                    </span>
+                                    <span class="font-medium">
+                                        <span class="lang-zh lang-active">液氮罐 #01 - 层架 3</span>
+                                        <span class="lang-en">LN2 Tank #01 - Shelf 3</span>
+                                    </span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-academic-600">
+                                        <span class="lang-zh lang-active">操作者:</span>
+                                        <span class="lang-en">Operator:</span>
+                                    </span>
+                                    <span class="font-medium">
+                                        <span class="lang-zh lang-active">李研究员</span>
+                                        <span class="lang-en">Researcher Li</span>
+                                    </span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-academic-600">
+                                        <span class="lang-zh lang-active">备注:</span>
+                                        <span class="lang-en">Notes:</span>
+                                    </span>
+                                    <span class="font-medium">HEK293 Cells</span>
+                                </div>
+                            </div>
+                            <div class="mt-3 flex gap-2">
+                                <button class="btn-academic w-full bg-primary text-white px-2 py-1 rounded-academic text-xs hover:bg-primary-dark transition-all">
+                                    <i class="fa-solid fa-edit mr-1"></i>
+                                    <span class="lang-zh lang-active">编辑</span>
+                                    <span class="lang-en">Edit</span>
+                                </button>
+                                <button class="btn-academic w-full bg-accent text-white px-2 py-1 rounded-academic text-xs hover:bg-accent/90 transition-all">
+                                    <i class="fa-solid fa-trash mr-1"></i>
+                                    <span class="lang-zh lang-active">删除</span>
+                                    <span class="lang-en">Delete</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 操作日志 -->
+                    <div>
+                        <h4 class="font-medium text-sm mb-3 text-gray-academic-800 flex items-center">
+                            <i class="fa-solid fa-clock-rotate-left mr-2 text-primary"></i>
+                            <span class="lang-zh lang-active">操作日志</span>
+                            <span class="lang-en">Operation Log</span>
+                        </h4>
+                        <div class="bg-white rounded-academic-lg border border-gray-academic-200 p-3 text-xs max-h-[200px] overflow-y-auto">
+                            <div class="space-y-2 text-gray-academic-700">
+                                <div class="pb-2 border-b border-gray-academic-100">
+                                    <div class="flex justify-between">
+                                        <span class="font-medium text-primary">2025-01-06 10:35</span>
+                                        <span>
+                                            <span class="lang-zh lang-active">管理员</span>
+                                            <span class="lang-en">Admin</span>
+                                        </span>
+                                    </div>
+                                    <div class="mt-1">
+                                        <span class="lang-zh lang-active">编辑 A1 样本信息</span>
+                                        <span class="lang-en">Edited A1 sample information</span>
+                                    </div>
+                                </div>
+                                <div class="pb-2 border-b border-gray-academic-100">
+                                    <div class="flex justify-between">
+                                        <span class="font-medium text-primary">2025-01-06 10:20</span>
+                                        <span>
+                                            <span class="lang-zh lang-active">管理员</span>
+                                            <span class="lang-en">Admin</span>
+                                        </span>
+                                    </div>
+                                    <div class="mt-1">
+                                        <span class="lang-zh lang-active">批量导入 18 个样本</span>
+                                        <span class="lang-en">Bulk imported 18 samples</span>
+                                    </div>
+                                </div>
+                                <div class="pb-2 border-b border-gray-academic-100">
+                                    <div class="flex justify-between">
+                                        <span class="font-medium text-primary">2025-01-06 10:00</span>
+                                        <span>
+                                            <span class="lang-zh lang-active">系统</span>
+                                            <span class="lang-en">System</span>
+                                        </span>
+                                    </div>
+                                    <div class="mt-1">
+                                        <span class="lang-zh lang-active">自动备份完成</span>
+                                        <span class="lang-en">Auto backup completed</span>
+                                    </div>
+                                </div>
+                                <div class="pb-2 border-b border-gray-academic-100">
+                                    <div class="flex justify-between">
+                                        <span class="font-medium text-primary">2025-01-06 09:45</span>
+                                        <span>
+                                            <span class="lang-zh lang-active">李研究员</span>
+                                            <span class="lang-en">Researcher Li</span>
+                                        </span>
+                                    </div>
+                                    <div class="mt-1">
+                                        <span class="lang-zh lang-active">创建冻存盒 #20250106</span>
+                                        <span class="lang-en">Created Storage Box #20250106</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 主内容区 -->
+                <div class="flex-1 p-6">
+                    <!-- 冻存盒标题栏 -->
+                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-5">
+                        <div>
+                            <h3 class="font-semibold text-lg text-gray-academic-800 font-display">
+                                <span class="lang-zh lang-active">冻存盒 #20250106</span>
+                                <span class="lang-en">Storage Box #20250106</span>
+                            </h3>
+                            <p class="text-xs text-gray-academic-500">
+                                <span class="lang-zh lang-active">创建时间: 2025-01-06 | 孔位总数: 81 | 已使用: 18</span>
+                                <span class="lang-en">Created: 2025-01-06 | Total Wells: 81 | Used: 18</span>
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-3 mt-3 md:mt-0">
+                            <div class="text-xs bg-primary-light text-primary px-2 py-1 rounded-academic status-badge">
+                                <i class="fa-solid fa-circle mr-1 text-xs"></i>
+                                <span class="lang-zh lang-active">已使用</span>
+                                <span class="lang-en">Used</span>
+                            </div>
+                            <div class="text-xs bg-gray-academic-100 text-gray-academic-600 px-2 py-1 rounded-academic status-badge">
+                                <i class="fa-solid fa-circle mr-1 text-xs"></i>
+                                <span class="lang-zh lang-active">未使用</span>
+                                <span class="lang-en">Unused</span>
+                            </div>
+                            <div class="text-xs bg-warning-light text-warning px-2 py-1 rounded-academic status-badge">
+                                <i class="fa-solid fa-circle mr-1 text-xs"></i>
+                                <span class="lang-zh lang-active">待处理</span>
+                                <span class="lang-en">Pending</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 9x9完整冻存盒网格 -->
+                    <div class="grid grid-cols-9 gap-1 bg-gray-academic-100 p-3 rounded-academic-lg overflow-x-auto">
+                        <!-- 第一行 -->
+                        <div class="grid-cell aspect-square bg-primary-light rounded flex items-center justify-center text-xs text-primary font-medium">A1<br>Sample A-001</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">A2</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">A3</div>
+                        <div class="grid-cell aspect-square bg-warning-light rounded flex items-center justify-center text-xs text-warning font-medium">A4<br>
+                            <span class="lang-zh lang-active">待处理</span>
+                            <span class="lang-en">Pending</span>
+                        </div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">A5</div>
+                        <div class="grid-cell aspect-square bg-primary-light rounded flex items-center justify-center text-xs text-primary font-medium">A6<br>Sample A-006</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">A7</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">A8</div>
+                        <div class="grid-cell aspect-square bg-primary-light rounded flex items-center justify-center text-xs text-primary font-medium">A9<br>Sample A-009</div>
+                        
+                        <!-- 第二行 -->
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">B1</div>
+                        <div class="grid-cell aspect-square bg-secondary-light rounded flex items-center justify-center text-xs text-secondary font-medium">B2<br>Sample B-002</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">B3</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">B4</div>
+                        <div class="grid-cell aspect-square bg-primary-light rounded flex items-center justify-center text-xs text-primary font-medium">B5<br>Sample B-005</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">B6</div>
+                        <div class="grid-cell aspect-square bg-warning-light rounded flex items-center justify-center text-xs text-warning font-medium">B7<br>
+                            <span class="lang-zh lang-active">待处理</span>
+                            <span class="lang-en">Pending</span>
+                        </div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">B8</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">B9</div>
+                        
+                        <!-- 第三行 -->
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">C1</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">C2</div>
+                        <div class="grid-cell aspect-square bg-primary-light rounded flex items-center justify-center text-xs text-primary font-medium">C3<br>Sample C-003</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">C4</div>
+                        <div class="grid-cell aspect-square bg-warning-light rounded flex items-center justify-center text-xs text-warning font-medium">C5<br>
+                            <span class="lang-zh lang-active">待处理</span>
+                            <span class="lang-en">Pending</span>
+                        </div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">C6</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">C7</div>
+                        <div class="grid-cell aspect-square bg-primary-light rounded flex items-center justify-center text-xs text-primary font-medium">C8<br>Sample C-008</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">C9</div>
+                        
+                        <!-- 第四行到第九行保持不变 -->
+                        <!-- 第四行 -->
+                        <div class="grid-cell aspect-square bg-primary-light rounded flex items-center justify-center text-xs text-primary font-medium">D1<br>Sample D-001</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">D2</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">D3</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">D4</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">D5</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">D6</div>
+                        <div class="grid-cell aspect-square bg-primary-light rounded flex items-center justify-center text-xs text-primary font-medium">D7<br>Sample D-007</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">D8</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">D9</div>
+                        
+                        <!-- 第五行 -->
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">E1</div>
+                        <div class="grid-cell aspect-square bg-primary-light rounded flex items-center justify-center text-xs text-primary font-medium">E2<br>Sample E-002</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">E3</div>
+                        <div class="grid-cell aspect-square bg-warning-light rounded flex items-center justify-center text-xs text-warning font-medium">E4<br>
+                            <span class="lang-zh lang-active">待处理</span>
+                            <span class="lang-en">Pending</span>
+                        </div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">E5</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">E6</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">E7</div>
+                        <div class="grid-cell aspect-square bg-primary-light rounded flex items-center justify-center text-xs text-primary font-medium">E8<br>Sample E-008</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">E9</div>
+                        
+                        <!-- 第六行 -->
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">F1</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">F2</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">F3</div>
+                        <div class="grid-cell aspect-square bg-primary-light rounded flex items-center justify-center text-xs text-primary font-medium">F4<br>Sample F-004</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">F5</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">F6</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">F7</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">F8</div>
+                        <div class="grid-cell aspect-square bg-warning-light rounded flex items-center justify-center text-xs text-warning font-medium">F9<br>
+                            <span class="lang-zh lang-active">待处理</span>
+                            <span class="lang-en">Pending</span>
+                        </div>
+                        
+                        <!-- 第七行 -->
+                        <div class="grid-cell aspect-square bg-primary-light rounded flex items-center justify-center text-xs text-primary font-medium">G1<br>Sample G-001</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">G2</div>
+                        <div class="grid-cell aspect-square bg-warning-light rounded flex items-center justify-center text-xs text-warning font-medium">G3<br>
+                            <span class="lang-zh lang-active">待处理</span>
+                            <span class="lang-en">Pending</span>
+                        </div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">G4</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">G5</div>
+                        <div class="grid-cell aspect-square bg-primary-light rounded flex items-center justify-center text-xs text-primary font-medium">G6<br>Sample G-006</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">G7</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">G8</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">G9</div>
+                        
+                        <!-- 第八行 -->
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">H1</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">H2</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">H3</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">H4</div>
+                        <div class="grid-cell aspect-square bg-primary-light rounded flex items-center justify-center text-xs text-primary font-medium">H5<br>Sample H-005</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">H6</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">H7</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">H8</div>
+                        <div class="grid-cell aspect-square bg-primary-light rounded flex items-center justify-center text-xs text-primary font-medium">H9<br>Sample H-009</div>
+                        
+                        <!-- 第九行 -->
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">I1</div>
+                        <div class="grid-cell aspect-square bg-primary-light rounded flex items-center justify-center text-xs text-primary font-medium">I2<br>Sample I-002</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">I3</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">I4</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">I5</div>
+                        <div class="grid-cell aspect-square bg-warning-light rounded flex items-center justify-center text-xs text-warning font-medium">I6<br>
+                            <span class="lang-zh lang-active">待处理</span>
+                            <span class="lang-en">Pending</span>
+                        </div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">I7</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">I8</div>
+                        <div class="grid-cell aspect-square bg-white rounded flex items-center justify-center text-xs text-gray-academic-600">I9</div>
+                    </div>
+
+                    <!-- 功能按钮区 -->
+                    <div class="mt-6 flex flex-wrap gap-3">
+                        <button class="btn-academic bg-primary text-white px-4 py-2 rounded-academic shadow-academic text-sm hover:bg-primary-dark transition-all">
+                            <i class="fa-solid fa-file-import mr-2"></i>
+                            <span class="lang-zh lang-active">批量导入</span>
+                            <span class="lang-en">Bulk Import</span>
+                        </button>
+                        <button class="btn-academic bg-primary text-white px-4 py-2 rounded-academic shadow-academic text-sm hover:bg-primary-dark transition-all">
+                            <i class="fa-solid fa-save mr-2"></i>
+                            <span class="lang-zh lang-active">保存 (Ctrl+S)</span>
+                            <span class="lang-en">Save (Ctrl+S)</span>
+                        </button>
+                        <button class="btn-academic bg-gray-academic-100 text-gray-academic-800 px-4 py-2 rounded-academic shadow-academic-sm text-sm hover:bg-gray-academic-200 transition-all">
+                            <i class="fa-solid fa-undo mr-2"></i>
+                            <span class="lang-zh lang-active">撤销 (Ctrl+Z)</span>
+                            <span class="lang-en">Undo (Ctrl+Z)</span>
+                        </button>
+                        <button class="btn-academic bg-gray-academic-100 text-gray-academic-800 px-4 py-2 rounded-academic shadow-academic-sm text-sm hover:bg-gray-academic-200 transition-all">
+                            <i class="fa-solid fa-redo mr-2"></i>
+                            <span class="lang-zh lang-active">重做 (Ctrl+Shift+Z)</span>
+                            <span class="lang-en">Redo (Ctrl+Shift+Z)</span>
+                        </button>
+                        <button class="btn-academic bg-accent text-white px-4 py-2 rounded-academic shadow-academic text-sm hover:bg-accent/90 transition-all">
+                            <i class="fa-solid fa-trash mr-2"></i>
+                            <span class="lang-zh lang-active">删除选中</span>
+                            <span class="lang-en">Delete Selected</span>
+                        </button>
+                        <button class="btn-academic bg-gray-academic-100 text-gray-academic-800 px-4 py-2 rounded-academic shadow-academic-sm text-sm hover:bg-gray-academic-200 transition-all">
+                            <i class="fa-solid fa-copy mr-2"></i>
+                            <span class="lang-zh lang-active">复制 (Ctrl+C)</span>
+                            <span class="lang-en">Copy (Ctrl+C)</span>
+                        </button>
+                        <button class="btn-academic bg-gray-academic-100 text-gray-academic-800 px-4 py-2 rounded-academic shadow-academic-sm text-sm hover:bg-gray-academic-200 transition-all">
+                            <i class="fa-solid fa-paste mr-2"></i>
+                            <span class="lang-zh lang-active">粘贴 (Ctrl+V)</span>
+                            <span class="lang-en">Paste (Ctrl+V)</span>
+                        </button>
+                    </div>
+                    
+                    <!-- 孔位信息编辑区 -->
+                    <div class="mt-6 bg-gray-academic-50 rounded-academic-lg p-4 border border-gray-academic-200">
+                        <h4 class="font-medium text-sm mb-3 text-gray-academic-800 font-display">
+                            <span class="lang-zh lang-active">孔位信息编辑</span>
+                            <span class="lang-en">Well Information Edit</span>
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs text-gray-academic-600 mb-1">
+                                    <span class="lang-zh lang-active">样本名称</span>
+                                    <span class="lang-en">Sample Name</span>
+                                </label>
+                                <input type="text" class="w-full px-3 py-2 text-sm border border-gray-academic-200 rounded-academic focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="e.g. Sample A-001" value="Sample A-001">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-academic-600 mb-1">
+                                    <span class="lang-zh lang-active">样本状态</span>
+                                    <span class="lang-en">Sample Status</span>
+                                </label>
+                                <select class="w-full px-3 py-2 text-sm border border-gray-academic-200 rounded-academic focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                                    <option selected>
+                                        <span class="lang-zh lang-active">正常</span>
+                                        <span class="lang-en">Active</span>
+                                    </option>
+                                    <option>
+                                        <span class="lang-zh lang-active">待处理</span>
+                                        <span class="lang-en">Pending</span>
+                                    </option>
+                                    <option>
+                                        <span class="lang-zh lang-active">已失效</span>
+                                        <span class="lang-en">Expired</span>
+                                    </option>
+                                    <option>
+                                        <span class="lang-zh lang-active">已转移</span>
+                                        <span class="lang-en">Transferred</span>
+                                    </option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-academic-600 mb-1">
+                                    <span class="lang-zh lang-active">录入日期</span>
+                                    <span class="lang-en">Entry Date</span>
+                                </label>
+                                <input type="date" class="w-full px-3 py-2 text-sm border border-gray-academic-200 rounded-academic focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" value="2025-01-06">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                            <div>
+                                <label class="block text-xs text-gray-academic-600 mb-1">
+                                    <span class="lang-zh lang-active">样本类型</span>
+                                    <span class="lang-en">Sample Type</span>
+                                </label>
+                                <input type="text" class="w-full px-3 py-2 text-sm border border-gray-academic-200 rounded-academic focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="e.g. Cell Line/Tissue Sample" value="Cell Line">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-academic-600 mb-1">
+                                    <span class="lang-zh lang-active">冻存位置</span>
+                                    <span class="lang-en">Storage Location</span>
+                                </label>
+                                <input type="text" class="w-full px-3 py-2 text-sm border border-gray-academic-200 rounded-academic focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="e.g. LN2 Tank #01 - Shelf 3" value="LN2 Tank #01 - Shelf 3">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-academic-600 mb-1">
+                                    <span class="lang-zh lang-active">操作者</span>
+                                    <span class="lang-en">Operator</span>
+                                </label>
+                                <input type="text" class="w-full px-3 py-2 text-sm border border-gray-academic-200 rounded-academic focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="Enter operator name" value="Researcher Li">
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="block text-xs text-gray-academic-600 mb-1">
+                                <span class="lang-zh lang-active">备注信息</span>
+                                <span class="lang-en">Notes</span>
+                            </label>
+                            <textarea class="w-full px-3 py-2 text-sm border border-gray-academic-200 rounded-academic focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" rows="2" placeholder="Enter sample notes">HEK293 Cells</textarea>
+                        </div>
+                        <div class="mt-3 flex justify-end">
+                            <button class="btn-academic bg-primary text-white px-3 py-1.5 rounded-academic shadow-academic text-xs hover:bg-primary-dark transition-all">
+                                <i class="fa-solid fa-check mr-1"></i>
+                                <span class="lang-zh lang-active">保存编辑</span>
+                                <span class="lang-en">Save Changes</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 核心功能详情区 -->
+    <section class="py-20 px-4 bg-white">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-center mb-16 gradient-text font-display">
+                <span class="lang-zh lang-active">核心功能特性</span>
+                <span class="lang-en">Core Features</span>
+            </h2>
+            
+            <div class="academic-divider mb-12"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+                <!-- 功能1：批量导入 -->
+                <div class="feature-card rounded-academic-lg p-7" data-aos="fade-up">
+                    <div class="feature-icon">
+                        <i class="fa-solid fa-file-excel text-2xl text-primary"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 font-display">
+                        <span class="lang-zh lang-active">多格式批量导入</span>
+                        <span class="lang-en">Multi-format Bulk Import</span>
+                    </h3>
+                    <ul class="text-gray-academic-600 space-y-2 text-sm">
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">支持Excel/CSV/TSV格式</span>
+                            <span class="lang-en">Supports Excel/CSV/TSV formats</span>
+                        </li>
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">自动识别样本详细信息</span>
+                            <span class="lang-en">Bulk entry of sample details</span>
+                        </li>
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">导入结果实时反馈</span>
+                            <span class="lang-en">Real-time import feedback</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 功能2：撤销/重做系统 -->
+                <div class="feature-card rounded-academic-lg p-7" data-aos="fade-up" data-aos-delay="200">
+                    <div class="feature-icon">
+                        <i class="fa-solid fa-rotate-left text-2xl text-primary"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 font-display">
+                        <span class="lang-zh lang-active">完整的撤销/重做</span>
+                        <span class="lang-en">Complete Undo/Redo</span>
+                    </h3>
+                    <ul class="text-gray-academic-600 space-y-2 text-sm">
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">支持单/批量操作撤销</span>
+                            <span class="lang-en">Supports single/batch operation undo</span>
+                        </li>
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">移动操作逆向恢复</span>
+                            <span class="lang-en">Reverse recovery of move operations</span>
+                        </li>
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">快捷键快速操作</span>
+                            <span class="lang-en">Quick shortcut operation</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 功能3：自动备份 -->
+                <div class="feature-card rounded-academic-lg p-7" data-aos="fade-up" data-aos-delay="400">
+                    <div class="feature-icon">
+                        <i class="fa-solid fa-shield-heart text-2xl text-primary"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 font-display">
+                        <span class="lang-zh lang-active">智能自动备份</span>
+                        <span class="lang-en">Intelligent Auto Backup</span>
+                    </h3>
+                    <ul class="text-gray-academic-600 space-y-2 text-sm">
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">启动时自动备份</span>
+                            <span class="lang-en">Automatic backup on startup</span>
+                        </li>
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">每10分钟定时备份</span>
+                            <span class="lang-en">Scheduled backup every 10 minutes</span>
+                        </li>
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">保留最新10个备份文件</span>
+                            <span class="lang-en">Keeps latest 10 backup files</span>
+                        </li>
+                    </ul>
+				</div>
+
+                <!-- 功能4：快捷键操作 -->
+                <div class="feature-card rounded-academic-lg p-7" data-aos="fade-up" data-aos-delay="600">
+                    <div class="feature-icon">
+                        <i class="fa-solid fa-keyboard text-2xl text-primary"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 font-display">
+                        <span class="lang-zh lang-active">高效快捷键操作</span>
+                        <span class="lang-en">Efficient Shortcut Operations</span>
+                    </h3>
+                    <ul class="text-gray-academic-600 space-y-2 text-sm">
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">全功能快捷键覆盖</span>
+                            <span class="lang-en">Full-feature shortcut coverage</span>
+                        </li>
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">自定义快捷键设置</span>
+                            <span class="lang-en">Custom shortcut settings</span>
+                        </li>
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">支持组合键快速操作</span>
+                            <span class="lang-en">Supports combo key quick operations</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 功能5：样本状态管理 -->
+                <div class="feature-card rounded-academic-lg p-7" data-aos="fade-up" data-aos-delay="800">
+                    <div class="feature-icon">
+                        <i class="fa-solid fa-tags text-2xl text-primary"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 font-display">
+                        <span class="lang-zh lang-active">多维度状态管理</span>
+                        <span class="lang-en">Multi-dimensional Status Management</span>
+                    </h3>
+                    <ul class="text-gray-academic-600 space-y-2 text-sm">
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">自定义样本状态标签</span>
+                            <span class="lang-en">Custom sample status tags</span>
+                        </li>
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">状态颜色可视化区分</span>
+                            <span class="lang-en">Color-coded status visualization</span>
+                        </li>
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">按状态快速筛选样本</span>
+                            <span class="lang-en">Quick sample filtering by status</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 功能6：数据可视化 -->
+                <div class="feature-card rounded-academic-lg p-7" data-aos="fade-up" data-aos-delay="1000">
+                    <div class="feature-icon">
+                        <i class="fa-solid fa-chart-pie text-2xl text-primary"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 font-display">
+                        <span class="lang-zh lang-active">智能数据可视化</span>
+                        <span class="lang-en">Intelligent Data Visualization</span>
+                    </h3>
+                    <ul class="text-gray-academic-600 space-y-2 text-sm">
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">冻存盒使用占比分析</span>
+                            <span class="lang-en">Storage box usage ratio analysis</span>
+                        </li>
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">样本类型分布统计</span>
+                            <span class="lang-en">Sample type distribution statistics</span>
+                        </li>
+                        <li><i class="fa-solid fa-check text-primary mr-2 text-xs"></i>
+                            <span class="lang-zh lang-active">导出可视化报表</span>
+                            <span class="lang-en">Export visual reports</span>
+                        </li>
+                    </ul>
+                </div>               
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-academic-900 text-white py-12 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 font-display">CryoMaster Pro</h3>
+                    <p class="text-gray-academic-400 text-sm">
+                        <span class="block-lang-zh block-lang-active">智能冻存盒管理系统，为生物实验室提供高效、安全、便捷的样本管理解决方案。</span>
+                        <span class="block-lang-en">Intelligent cryogenic storage management system, providing efficient, safe and convenient sample management solutions for biological laboratories.</span>
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-medium mb-4 font-display">
+                        <span class="lang-zh lang-active">快速链接</span>
+                        <span class="lang-en">Quick Links</span>
+                    </h4>
+                    <ul class="space-y-2 text-sm text-gray-academic-400">
+                        <li><a href="#" class="hover:text-white transition-colors"><i class="fa-solid fa-angle-right mr-2 text-primary"></i>
+                            <span class="lang-zh lang-active">功能介绍</span>
+                            <span class="lang-en">Features</span>
+                        </a></li>
+                        <li><a href="#" class="hover:text-white transition-colors"><i class="fa-solid fa-angle-right mr-2 text-primary"></i>
+                            <span class="lang-zh lang-active">使用教程</span>
+                            <span class="lang-en">Tutorials</span>
+                    </ul>
+                </div>
+            </div>
+            <div class="academic-divider mt-8 mb-8 bg-gray-academic-700"></div>
+            <div class="text-center text-gray-academic-500 text-xs">
+                <p>© 2025 CryoMaster Pro. All rights reserved.</p>
+                <p class="mt-2">
+                    <span class="lang-zh lang-active">未经授权，任何单位或个人不得对本系统进行修改、反向工程或传播，违者将依法追究其法律责任。</span>
+                    <span class="lang-en">Without authorization, no organization or individual may modify, reverse engineer, or distribute this system. Violators will be held legally liable.</span>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // 初始化AOS动画
+        AOS.init({
+            duration: 1000,
+            easing: 'ease-in-out',
+            once: true,
+            mirror: false
+        });
+
+        // 语言切换功能
+        document.getElementById('langToggle').addEventListener('click', function() {
+            // 切换按钮文字
+            const zhElements = document.querySelectorAll('.lang-zh');
+            const enElements = document.querySelectorAll('.lang-en');
+            const blockZhElements = document.querySelectorAll('.block-lang-zh');
+            const blockEnElements = document.querySelectorAll('.block-lang-en');
+            
+            zhElements.forEach(el => {
+                el.classList.toggle('lang-active');
+            });
+            enElements.forEach(el => {
+                el.classList.toggle('lang-active');
+            });
+            blockZhElements.forEach(el => {
+                el.classList.toggle('block-lang-active');
+            });
+            blockEnElements.forEach(el => {
+                el.classList.toggle('block-lang-active');
+            });
+            
+            // 切换HTML语言属性
+            const htmlEl = document.documentElement;
+            if (htmlEl.lang === 'en') {
+                htmlEl.lang = 'zh-CN';
+            } else {
+                htmlEl.lang = 'en';
+            }
+        });
+
+        // 网格单元格点击事件
+        document.querySelectorAll('.grid-cell').forEach(cell => {
+            cell.addEventListener('click', function() {
+                // 移除其他单元格的选中状态
+                document.querySelectorAll('.grid-cell').forEach(c => {
+                    c.classList.remove('ring-2', 'ring-primary', 'ring-offset-2');
+                });
+                // 添加当前单元格选中状态
+                this.classList.add('ring-2', 'ring-primary', 'ring-offset-2');
+                
+                // 这里可以添加选中后的逻辑，比如更新样本信息面板
+                const cellId = this.textContent.split('<br>')[0].trim();
+                console.log('选中单元格:', cellId);
+            });
+        });
+
+        // 快捷键支持
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+S 保存
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                alert('保存操作已触发');
+            }
+            // Ctrl+Z 撤销
+            if (e.ctrlKey && e.key === 'z') {
+                e.preventDefault();
+                alert('撤销操作已触发');
+            }
+            // Ctrl+Shift+Z 重做
+            if (e.ctrlKey && e.shiftKey && e.key === 'z') {
+                e.preventDefault();
+                alert('重做操作已触发');
+            }
+            // Ctrl+C 复制
+            if (e.ctrlKey && e.key === 'c') {
+                e.preventDefault();
+                alert('复制操作已触发');
+            }
+            // Ctrl+V 粘贴
+            if (e.ctrlKey && e.key === 'v') {
+                e.preventDefault();
+                alert('粘贴操作已触发');
+            }
+        });
+    </script>
+</body>
+</html>
